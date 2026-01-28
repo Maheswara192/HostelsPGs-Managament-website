@@ -290,6 +290,9 @@ const OwnerTenants = () => {
                     idProofFront: null, idProofBack: null, guardian_name: '', guardian_phone: '', permanent_address: '', id_proof_type: 'Aadhaar', id_proof_number: '', blood_group: '',
                     moveInDate: new Date().toISOString().split('T')[0]
                 });
+                // Reset validation states
+                setValidationErrors({ mobile: '', guardian_phone: '', id_proof_number: '' });
+                setValidationSuccess({ mobile: false, guardian_phone: false, id_proof_number: false });
             }
         } catch (error) {
             console.error("Save Tenant Error:", error);
@@ -458,6 +461,9 @@ const OwnerTenants = () => {
                                         idProofFront: null, idProofBack: null, guardian_name: '', guardian_phone: '', permanent_address: '', id_proof_type: 'Aadhaar', id_proof_number: '', blood_group: '',
                                         moveInDate: new Date().toISOString().split('T')[0]
                                     });
+                                    // Reset validation states
+                                    setValidationErrors({ mobile: '', guardian_phone: '', id_proof_number: '' });
+                                    setValidationSuccess({ mobile: false, guardian_phone: false, id_proof_number: false });
                                 } else {
                                     setShowForm(true);
                                     setEditingId(null);
@@ -465,6 +471,9 @@ const OwnerTenants = () => {
                                         name: '', email: '', password: '', mobile: '', room_id: '', rentAmount: '', advanceAmount: '',
                                         idProof: null, guardian_name: '', guardian_phone: '', permanent_address: '', id_proof_type: 'Aadhaar', id_proof_number: '', blood_group: ''
                                     });
+                                    // Reset validation states
+                                    setValidationErrors({ mobile: '', guardian_phone: '', id_proof_number: '' });
+                                    setValidationSuccess({ mobile: false, guardian_phone: false, id_proof_number: false });
                                     ownerService.getRooms().then(res => {
                                         if (res.success) setRooms(res.data);
                                     });
@@ -571,7 +580,7 @@ const OwnerTenants = () => {
                                         value={formData.guardian_phone}
                                         onChange={(e) => handlePhoneChange(e, 'guardian_phone')}
                                         className={`border p-2 rounded w-full pr-10 ${validationErrors.guardian_phone ? 'border-red-500' :
-                                                validationSuccess.guardian_phone ? 'border-green-500' : 'border-slate-300'
+                                            validationSuccess.guardian_phone ? 'border-green-500' : 'border-slate-300'
                                             }`}
                                     />
                                     {formData.guardian_phone && (
@@ -615,7 +624,7 @@ const OwnerTenants = () => {
                                             }}
                                             required
                                             className={`border p-2 rounded w-full pr-10 ${formData.id_proof_type === 'Aadhaar' && validationErrors.id_proof_number ? 'border-red-500' :
-                                                    formData.id_proof_type === 'Aadhaar' && validationSuccess.id_proof_number ? 'border-green-500' : 'border-slate-300'
+                                                formData.id_proof_type === 'Aadhaar' && validationSuccess.id_proof_number ? 'border-green-500' : 'border-slate-300'
                                                 }`}
                                         />
                                         {formData.id_proof_type === 'Aadhaar' && formData.id_proof_number && (
