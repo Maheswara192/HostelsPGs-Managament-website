@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ownerService from '../../services/owner.service';
-import { UserPlus, Trash2, Phone, Mail, Edit2, Upload } from 'lucide-react';
+import { UserPlus, Trash2, Phone, Mail, Edit2, Upload, Eye, EyeOff } from 'lucide-react';
 import Skeleton from '../../components/common/Skeleton';
 import SearchInput from '../../components/common/SearchInput';
 
@@ -9,6 +9,7 @@ const OwnerTenants = () => {
     const [loading, setLoading] = useState(true);
     const [rooms, setRooms] = useState([]);
     const [hasAccess, setHasAccess] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Add Tenant Form State
     const [showForm, setShowForm] = useState(() => {
@@ -398,7 +399,30 @@ const OwnerTenants = () => {
                             <input type="date" id="moveInDate" name="moveInDate" value={formData.moveInDate} onChange={handleInputChange} required className="border p-2 rounded w-full" />
                         </div>
 
-                        <input type="password" name="password" placeholder="Password *" value={formData.password} onChange={handleInputChange} required={!editingId} className="border p-2 rounded" />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                placeholder="Password *"
+                                value={formData.password}
+                                onChange={handleInputChange}
+                                required={!editingId}
+                                className="border p-2 rounded pr-10 w-full"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                                tabIndex={-1}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="w-5 h-5" />
+                                ) : (
+                                    <Eye className="w-5 h-5" />
+                                )}
+                            </button>
+                        </div>
 
                         <select name="room_id" value={formData.room_id} onChange={handleInputChange} required className="border p-2 rounded">
                             <option value="">Select Room *</option>
