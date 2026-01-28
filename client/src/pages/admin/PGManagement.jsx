@@ -31,6 +31,7 @@ const PGManagement = () => {
     // Dialog State
     const [deleteId, setDeleteId] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedPg, setSelectedPg] = useState(null);
 
     const fetchPGs = useCallback(async () => {
         setLoading(true);
@@ -184,7 +185,7 @@ const PGManagement = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button size="icon" variant="ghost" title="View Details">
+                                                <Button size="icon" variant="ghost" title="View Details" onClick={() => setSelectedPg(pg)}>
                                                     <Eye size={16} className="text-slate-500" />
                                                 </Button>
                                                 <Button
@@ -220,6 +221,82 @@ const PGManagement = () => {
                 confirmLabel="Delete Permanently"
                 isLoading={isDeleting}
             />
+
+            {/* View Details Modal */}
+            {selectedPg && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-200">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800">PG Details</h3>
+                                <p className="text-xs text-slate-500">ID: {selectedPg._id}</p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedPg(null)}
+                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 18 18" /></svg>
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">PG Name</label>
+                                    <p className="font-medium text-slate-900">{selectedPg.name}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Status</label>
+                                    <p>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${selectedPg.subscription?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                                            {selectedPg.subscription?.status || 'inactive'}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Owner Name</label>
+                                    <p className="text-slate-700">{selectedPg.owner?.name || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Owner Email</label>
+                                    <p className="text-slate-700 truncate" title={selectedPg.owner?.email}>{selectedPg.owner?.email || 'N/A'}</p>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Description</label>
+                                    <p className="text-sm text-slate-600">{selectedPg.description || 'No description provided.'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">City</label>
+                                    <p className="text-slate-700">{selectedPg.city || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">State</label>
+                                    <p className="text-slate-700">{selectedPg.state || 'N/A'}</p>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Address</label>
+                                    <p className="text-sm text-slate-600">{selectedPg.address || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Created At</label>
+                                    <p className="text-slate-700">{new Date(selectedPg.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Plan</label>
+                                    <p className="text-slate-700 capitalize">{selectedPg.subscription?.plan || 'Free'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                            <button
+                                onClick={() => setSelectedPg(null)}
+                                className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
