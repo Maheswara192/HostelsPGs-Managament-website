@@ -145,7 +145,20 @@ exports.addTenant = async (req, res) => {
     // 1. Check if user exists
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ success: false, message: 'User with this email already exists' });
+      // Check if this user has an active tenant profile
+      const existingTenant = await Tenant.findOne({ user_id: user._id });
+
+      if (existingTenant) {
+        return res.status(400).json({
+          success: false,
+          message: 'User with this email already exists as an active tenant'
+        });
+      } else {
+        // Orphaned user account (tenant was deleted but user wasn't) - clean it up
+        console.log(`⚠️ Found orphaned user account: ${email}. Cleaning up...`);
+        await User.findByIdAndDelete(user._id);
+        user = null; // Allow creation to proceed
+      }
     }
 
     // 0. Verify Room belongs to this PG
@@ -340,16 +353,27 @@ exports.deleteTenant = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Not authorized' });
     }
 
-    // Optional: Delete associated User account
-    await User.findByIdAndDelete(tenant.user_id);
+    // Store user_id before deletion
+    const userId = tenant.user_id;
 
-    // Delete Tenant Profile
+    // Delete Tenant Profile first
     await tenant.deleteOne();
+    console.log(`✅ Tenant profile deleted: ${req.params.id}`);
+
+    // Delete associated User account
+    if (userId) {
+      const deletedUser = await User.findByIdAndDelete(userId);
+      if (deletedUser) {
+        console.log(`✅ User account deleted: ${userId} (${deletedUser.email})`);
+      } else {
+        console.warn(`⚠️ User account not found for deletion: ${userId}`);
+      }
+    }
 
     res.status(200).json({ success: true, message: 'Tenant deleted successfully' });
   } catch (error) {
     console.error("Delete Tenant Error:", error);
-    res.status(500).json({ success: false, message: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
 
