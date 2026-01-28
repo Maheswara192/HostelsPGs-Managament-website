@@ -127,24 +127,65 @@ exports.deletePG = async (req, res) => {
             return res.status(404).json({ success: false, message: 'PG not found' });
         }
 
-        // Cascading Delete
-        // 1. Delete all Tenants
-        await Tenant.deleteMany({ pg_id: pg._id });
+        console.log(`🗑️ Starting CASCADE DELETE for PG: ${pg.name} (ID: ${pg._id})`);
 
-        // 2. Delete all Rooms
-        await Room.deleteMany({ pg_id: pg._id });
+        // Cascading Delete - Delete in proper order to maintain referential integrity
 
-        // 3. Delete Owner? (Optional: The Owner User account might remain, but without PG)
-        await User.findByIdAndUpdate(pg.owner_id, { $unset: { pg_id: 1 } });
+        // 1. Find all tenants for this PG
+        const tenants = await Tenant.find({ pg_id: pg._id });
+        console.log(`📊 Found ${tenants.length} tenants to delete`);
 
+        // 2. Delete all tenant USER accounts
+        if (tenants.length > 0) {
+            const tenantUserIds = tenants.map(t => t.user_id);
+            const deletedTenantUsers = await User.deleteMany({ _id: { $in: tenantUserIds } });
+            console.log(`✅ Deleted ${deletedTenantUsers.deletedCount} tenant user accounts`);
+        }
+
+        // 3. Delete all Tenant profiles
+        const deletedTenants = await Tenant.deleteMany({ pg_id: pg._id });
+        console.log(`✅ Deleted ${deletedTenants.deletedCount} tenant profiles`);
+
+        // 4. Delete all Rooms
+        const deletedRooms = await Room.deleteMany({ pg_id: pg._id });
+        console.log(`✅ Deleted ${deletedRooms.deletedCount} rooms`);
+
+        // 5. Delete Owner User account
+        if (pg.owner_id) {
+            const deletedOwner = await User.findByIdAndDelete(pg.owner_id);
+            if (deletedOwner) {
+                console.log(`✅ Deleted owner user account: ${deletedOwner.email}`);
+            } else {
+                console.warn(`⚠️ Owner user not found: ${pg.owner_id}`);
+            }
+        }
+
+        // 6. Delete the PG itself
         await pg.deleteOne();
+        console.log(`✅ Deleted PG: ${pg.name}`);
 
         // Audit Log
         const { logAction } = require('../services/audit.service');
-        logAction(req, 'DELETE_PG', 'PG', pg._id, { name: pg.name });
+        logAction(req, 'DELETE_PG', 'PG', pg._id, {
+            name: pg.name,
+            deletedTenants: deletedTenants.deletedCount,
+            deletedRooms: deletedRooms.deletedCount,
+            deletedOwner: !!pg.owner_id
+        });
 
-        res.status(200).json({ success: true, message: 'PG deleted successfully' });
+        console.log(`🎉 CASCADE DELETE completed successfully for PG: ${pg.name}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'PG and all associated data deleted successfully',
+            data: {
+                deletedTenants: deletedTenants.deletedCount,
+                deletedRooms: deletedRooms.deletedCount,
+                deletedOwner: !!pg.owner_id
+            }
+        });
     } catch (error) {
+        console.error('❌ CASCADE DELETE ERROR:', error);
         res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
