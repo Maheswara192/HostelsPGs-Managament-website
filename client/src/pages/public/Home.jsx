@@ -22,11 +22,13 @@ const Home = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
-                            Manage your PG & Hostels <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-light to-blue-400">like a Pro.</span>
+                        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight drop-shadow-lg">
+                            <span className="text-white">Manage your PG & Hostels</span> <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 drop-shadow-[0_2px_10px_rgba(56,189,248,0.5)]">
+                                like a Pro.
+                            </span>
                         </h1>
-                        <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+                        <p className="text-xl md:text-2xl text-slate-200 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-md font-medium">
                             The all-in-one platform to streamline tenants, rent collection, and complaints. Built for owners who care about efficiency.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
