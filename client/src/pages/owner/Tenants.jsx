@@ -34,7 +34,6 @@ const OwnerTenants = () => {
             permanent_address: '',
             id_proof_type: 'Aadhaar',
             id_proof_number: '',
-            id_proof_number: '',
             blood_group: '',
             moveInDate: new Date().toISOString().split('T')[0], // Default to today
             idProofFront: null, // Files cannot be persisted in localStorage easily
