@@ -132,10 +132,33 @@ exports.getMe = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email });
+
+        // Validate email format
+        if (!email || !email.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email address is required'
+            });
+        }
+
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please enter a valid email address'
+            });
+        }
+
+        // Check if user exists in database
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
 
         if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+            console.log(`⚠️ Password reset attempted for non-existent email: ${email}`);
+            return res.status(404).json({
+                success: false,
+                message: 'No account found with this email address. Please check and try again.'
+            });
         }
 
         // Generate 6 digit OTP
