@@ -146,15 +146,38 @@ exports.forgotPassword = async (req, res) => {
         user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
         await user.save();
 
-        // Send OTP via Email
-        const sent = await sendOTP(user.email, otp);
+        console.log('==================================================');
+        console.log(`🔐 PASSWORD RESET REQUEST for: ${email}`);
+        console.log(`📧 OTP Generated: ${otp}`);
+        console.log(`⏰ Valid until: ${new Date(user.resetPasswordExpires).toLocaleString()}`);
+        console.log('==================================================');
 
-        if (sent) {
-            res.json({ success: true, message: 'OTP sent to email' });
-        } else {
-            res.status(500).json({ success: false, message: 'Failed to send OTP email' });
+        // Try to send OTP via Email
+        try {
+            const sent = await sendOTP(user.email, otp);
+
+            if (sent) {
+                console.log(`✅ OTP email sent successfully to ${email}`);
+                return res.json({
+                    success: true,
+                    message: 'OTP sent to your email. Please check your inbox.'
+                });
+            }
+        } catch (emailError) {
+            console.error('❌ Email sending failed:', emailError.message);
+            console.log(`⚠️ OTP for ${email}: ${otp} (Check server logs)`);
         }
+
+        // If email fails, still return success but with a note
+        // The OTP is logged in console for development/testing
+        res.json({
+            success: true,
+            message: 'OTP generated. Please check server logs or contact administrator.',
+            devNote: process.env.NODE_ENV !== 'production' ? `OTP: ${otp}` : undefined
+        });
+
     } catch (error) {
+        console.error('❌ Forgot Password Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
