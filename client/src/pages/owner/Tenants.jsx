@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ownerService from '../../services/owner.service';
-import { UserPlus, Trash2, Phone, Mail, Edit2, Upload, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Trash2, Phone, Mail, Edit2, Upload, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import Skeleton from '../../components/common/Skeleton';
 import SearchInput from '../../components/common/SearchInput';
 
@@ -10,6 +10,18 @@ const OwnerTenants = () => {
     const [rooms, setRooms] = useState([]);
     const [hasAccess, setHasAccess] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
+
+    // Validation states
+    const [validationErrors, setValidationErrors] = useState({
+        mobile: '',
+        guardian_phone: '',
+        id_proof_number: ''
+    });
+    const [validationSuccess, setValidationSuccess] = useState({
+        mobile: false,
+        guardian_phone: false,
+        id_proof_number: false
+    });
 
     // Add Tenant Form State
     const [showForm, setShowForm] = useState(() => {
@@ -78,6 +90,99 @@ const OwnerTenants = () => {
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    // Validation Functions
+    const validatePhone = (phone) => {
+        // Indian mobile number: 10 digits, starts with 6, 7, 8, or 9
+        const phoneRegex = /^[6-9]\d{9}$/;
+
+        if (!phone) {
+            return { valid: false, error: '' };
+        }
+
+        if (phone.length < 10) {
+            return { valid: false, error: 'Phone number must be 10 digits' };
+        }
+
+        if (phone.length > 10) {
+            return { valid: false, error: 'Phone number cannot exceed 10 digits' };
+        }
+
+        if (!phoneRegex.test(phone)) {
+            return { valid: false, error: 'Invalid phone number. Must start with 6, 7, 8, or 9' };
+        }
+
+        return { valid: true, error: '' };
+    };
+
+    const validateAadhaar = (aadhaar) => {
+        // Aadhaar: 12 digits with Luhn algorithm validation
+        if (!aadhaar) {
+            return { valid: false, error: '' };
+        }
+
+        if (aadhaar.length < 12) {
+            return { valid: false, error: 'Aadhaar must be 12 digits' };
+        }
+
+        if (aadhaar.length > 12) {
+            return { valid: false, error: 'Aadhaar cannot exceed 12 digits' };
+        }
+
+        if (!/^\d{12}$/.test(aadhaar)) {
+            return { valid: false, error: 'Aadhaar must contain only digits' };
+        }
+
+        // Luhn algorithm for checksum validation
+        const luhnCheck = (num) => {
+            let sum = 0;
+            let isEven = false;
+
+            for (let i = num.length - 1; i >= 0; i--) {
+                let digit = parseInt(num[i]);
+
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) digit -= 9;
+                }
+
+                sum += digit;
+                isEven = !isEven;
+            }
+
+            return sum % 10 === 0;
+        };
+
+        if (!luhnCheck(aadhaar)) {
+            return { valid: false, error: 'Invalid Aadhaar number (checksum failed)' };
+        }
+
+        return { valid: true, error: '' };
+    };
+
+    const handlePhoneChange = (e, fieldName) => {
+        const value = e.target.value.replace(/\D/g, ''); // Only numbers
+
+        if (value.length <= 10) {
+            setFormData({ ...formData, [fieldName]: value });
+
+            const validation = validatePhone(value);
+            setValidationErrors(prev => ({ ...prev, [fieldName]: validation.error }));
+            setValidationSuccess(prev => ({ ...prev, [fieldName]: validation.valid }));
+        }
+    };
+
+    const handleAadhaarChange = (e) => {
+        const value = e.target.value.replace(/\D/g, ''); // Only numbers
+
+        if (value.length <= 12) {
+            setFormData({ ...formData, id_proof_number: value });
+
+            const validation = validateAadhaar(value);
+            setValidationErrors(prev => ({ ...prev, id_proof_number: validation.error }));
+            setValidationSuccess(prev => ({ ...prev, id_proof_number: validation.valid }));
+        }
     };
 
     const [editingId, setEditingId] = useState(null);
@@ -381,18 +486,36 @@ const OwnerTenants = () => {
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <input type="text" name="name" placeholder="Full Name *" value={formData.name} onChange={handleInputChange} required className="border p-2 rounded" />
                         <input type="email" name="email" placeholder="Email Address *" value={formData.email} onChange={handleInputChange} required className="border p-2 rounded" />
-                        <input
-                            type="tel"
-                            name="mobile"
-                            placeholder="Mobile Number (10 digits) *"
-                            value={formData.mobile}
-                            onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, ''); // Only numbers
-                                if (val.length <= 10) setFormData({ ...formData, mobile: val });
-                            }}
-                            required
-                            className="border p-2 rounded"
-                        />
+
+                        {/* Mobile Number with Validation */}
+                        <div className="relative">
+                            <input
+                                type="tel"
+                                name="mobile"
+                                placeholder="Mobile Number (10 digits) *"
+                                value={formData.mobile}
+                                onChange={(e) => handlePhoneChange(e, 'mobile')}
+                                required
+                                className={`border p-2 rounded w-full pr-10 ${validationErrors.mobile ? 'border-red-500' :
+                                    validationSuccess.mobile ? 'border-green-500' : 'border-slate-300'
+                                    }`}
+                            />
+                            {formData.mobile && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    {validationSuccess.mobile ? (
+                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                    ) : validationErrors.mobile ? (
+                                        <XCircle className="w-5 h-5 text-red-500" />
+                                    ) : null}
+                                </div>
+                            )}
+                            {validationErrors.mobile && (
+                                <p className="text-xs text-red-600 mt-1">{validationErrors.mobile}</p>
+                            )}
+                            {validationSuccess.mobile && (
+                                <p className="text-xs text-green-600 mt-1">✓ Valid phone number</p>
+                            )}
+                        </div>
 
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1" htmlFor="moveInDate">Date of Joining *</label>
@@ -438,7 +561,33 @@ const OwnerTenants = () => {
                             <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Compliance & Safety Details</h4>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <input type="text" name="guardian_name" placeholder="Guardian Name" value={formData.guardian_name} onChange={handleInputChange} className="border p-2 rounded" />
-                                <input type="tel" name="guardian_phone" placeholder="Guardian Contact" value={formData.guardian_phone} onChange={handleInputChange} className="border p-2 rounded" />
+
+                                {/* Guardian Phone with Validation */}
+                                <div className="relative">
+                                    <input
+                                        type="tel"
+                                        name="guardian_phone"
+                                        placeholder="Guardian Contact (10 digits)"
+                                        value={formData.guardian_phone}
+                                        onChange={(e) => handlePhoneChange(e, 'guardian_phone')}
+                                        className={`border p-2 rounded w-full pr-10 ${validationErrors.guardian_phone ? 'border-red-500' :
+                                                validationSuccess.guardian_phone ? 'border-green-500' : 'border-slate-300'
+                                            }`}
+                                    />
+                                    {formData.guardian_phone && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            {validationSuccess.guardian_phone ? (
+                                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                            ) : validationErrors.guardian_phone ? (
+                                                <XCircle className="w-5 h-5 text-red-500" />
+                                            ) : null}
+                                        </div>
+                                    )}
+                                    {validationErrors.guardian_phone && (
+                                        <p className="text-xs text-red-600 mt-1">{validationErrors.guardian_phone}</p>
+                                    )}
+                                </div>
+
                                 <input type="text" name="blood_group" placeholder="Blood Group (e.g. O+)" value={formData.blood_group} onChange={handleInputChange} className="border p-2 rounded" />
 
                                 <textarea name="permanent_address" placeholder="Permanent Home Address (Required for Police Verification) *" value={formData.permanent_address} onChange={handleInputChange} required className="border p-2 rounded md:col-span-2" rows="1"></textarea>
@@ -450,23 +599,41 @@ const OwnerTenants = () => {
                                         <option value="Passport">Passport</option>
                                         <option value="DL">DL</option>
                                     </select>
-                                    <input
-                                        type="text"
-                                        name="id_proof_number"
-                                        placeholder={`ID Number ${formData.id_proof_type === 'Aadhaar' ? '(12 digits)' : ''} *`}
-                                        value={formData.id_proof_number}
-                                        onChange={(e) => {
-                                            if (formData.id_proof_type === 'Aadhaar') {
-                                                const val = e.target.value.replace(/\D/g, '');
-                                                if (val.length <= 12) setFormData({ ...formData, id_proof_number: val });
-                                            } else {
-                                                // For PAN/Other, allow alphanum but maybe convert to upper?
-                                                setFormData({ ...formData, id_proof_number: e.target.value.toUpperCase() });
-                                            }
-                                        }}
-                                        required
-                                        className="border p-2 rounded w-2/3"
-                                    />
+                                    {/* Aadhaar/ID Number with Validation */}
+                                    <div className="relative w-2/3">
+                                        <input
+                                            type="text"
+                                            name="id_proof_number"
+                                            placeholder={`ID Number ${formData.id_proof_type === 'Aadhaar' ? '(12 digits)' : ''} *`}
+                                            value={formData.id_proof_number}
+                                            onChange={(e) => {
+                                                if (formData.id_proof_type === 'Aadhaar') {
+                                                    handleAadhaarChange(e);
+                                                } else {
+                                                    setFormData({ ...formData, id_proof_number: e.target.value });
+                                                }
+                                            }}
+                                            required
+                                            className={`border p-2 rounded w-full pr-10 ${formData.id_proof_type === 'Aadhaar' && validationErrors.id_proof_number ? 'border-red-500' :
+                                                    formData.id_proof_type === 'Aadhaar' && validationSuccess.id_proof_number ? 'border-green-500' : 'border-slate-300'
+                                                }`}
+                                        />
+                                        {formData.id_proof_type === 'Aadhaar' && formData.id_proof_number && (
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                {validationSuccess.id_proof_number ? (
+                                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                                ) : validationErrors.id_proof_number ? (
+                                                    <XCircle className="w-5 h-5 text-red-500" />
+                                                ) : null}
+                                            </div>
+                                        )}
+                                        {formData.id_proof_type === 'Aadhaar' && validationErrors.id_proof_number && (
+                                            <p className="text-xs text-red-600 mt-1 absolute">{validationErrors.id_proof_number}</p>
+                                        )}
+                                        {formData.id_proof_type === 'Aadhaar' && validationSuccess.id_proof_number && (
+                                            <p className="text-xs text-green-600 mt-1 absolute">✓ Valid Aadhaar number</p>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="md:col-span-1">
                                     <label className="block text-sm font-medium text-slate-700 mb-1">ID Proof (Front) *</label>
