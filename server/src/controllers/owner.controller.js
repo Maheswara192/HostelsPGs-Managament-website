@@ -144,22 +144,43 @@ exports.addTenant = async (req, res) => {
 
     // 1. Check if user exists
     let user = await User.findOne({ email });
+
     if (user) {
+      console.log(`📧 Found existing user with email: ${email}, user_id: ${user._id}`);
+
       // Check if this user has an active tenant profile
       const existingTenant = await Tenant.findOne({ user_id: user._id });
 
       if (existingTenant) {
+        console.log(`❌ User has active tenant profile: ${existingTenant._id}`);
         return res.status(400).json({
           success: false,
           message: 'User with this email already exists as an active tenant'
         });
       } else {
         // Orphaned user account (tenant was deleted but user wasn't) - clean it up
-        console.log(`⚠️ Found orphaned user account: ${email}. Cleaning up...`);
-        await User.findByIdAndDelete(user._id);
+        console.log(`⚠️ ORPHANED ACCOUNT DETECTED: ${email} (user_id: ${user._id})`);
+        console.log(`🧹 Cleaning up orphaned user account...`);
+
+        try {
+          const deletedUser = await User.findByIdAndDelete(user._id);
+          if (deletedUser) {
+            console.log(`✅ Successfully deleted orphaned user: ${email}`);
+          } else {
+            console.warn(`⚠️ User not found during deletion: ${user._id}`);
+          }
+        } catch (deleteError) {
+          console.error(`❌ Error deleting orphaned user:`, deleteError);
+          // Continue anyway - try to create new user
+        }
+
         user = null; // Allow creation to proceed
+        console.log(`✅ Orphaned account cleanup complete. Proceeding with new tenant creation.`);
       }
+    } else {
+      console.log(`✅ No existing user found with email: ${email}. Proceeding with creation.`);
     }
+
 
     // 0. Verify Room belongs to this PG
     if (!room_id) {
@@ -871,5 +892,68 @@ exports.manageExitRequest = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// @desc    Clean up orphaned user accounts (users without tenant profiles)
+// @route   POST /api/owner/cleanup-orphaned-accounts
+// @access  Private (Owner)
+exports.cleanupOrphanedAccounts = async (req, res) => {
+  try {
+    console.log('🧹 Starting orphaned account cleanup...');
+
+    // Find all users with role 'tenant' for this PG
+    const allTenantUsers = await User.find({
+      role: 'tenant',
+      pg_id: req.user.pg_id
+    });
+
+    console.log(`📊 Found ${allTenantUsers.length} tenant users for PG: ${req.user.pg_id}`);
+
+    const orphanedAccounts = [];
+
+    for (const user of allTenantUsers) {
+      // Check if this user has a tenant profile
+      const tenantProfile = await Tenant.findOne({ user_id: user._id });
+
+      if (!tenantProfile) {
+        orphanedAccounts.push({
+          user_id: user._id,
+          email: user.email,
+          name: user.name
+        });
+      }
+    }
+
+    console.log(`⚠️ Found ${orphanedAccounts.length} orphaned accounts`);
+
+    if (orphanedAccounts.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No orphaned accounts found',
+        data: { cleaned: 0, orphaned: [] }
+      });
+    }
+
+    // Delete orphaned accounts
+    const deletePromises = orphanedAccounts.map(account =>
+      User.findByIdAndDelete(account.user_id)
+    );
+
+    await Promise.all(deletePromises);
+
+    console.log(`✅ Cleaned up ${orphanedAccounts.length} orphaned accounts`);
+
+    res.json({
+      success: true,
+      message: `Successfully cleaned up ${orphanedAccounts.length} orphaned account(s)`,
+      data: {
+        cleaned: orphanedAccounts.length,
+        orphaned: orphanedAccounts
+      }
+    });
+  } catch (error) {
+    console.error('❌ Cleanup error:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };

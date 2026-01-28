@@ -2,7 +2,7 @@ const express = require('express');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 const { checkSubscription } = require('../middlewares/subscription.middleware');
 const { enforceIsolation } = require('../middlewares/isolation.middleware');
-const { getRooms, createRoom, updateRoom, deleteRoom, getTenants, addTenant, updateTenant, getComplaints, updateComplaintStatus, createNotice, getNotices, deleteNotice, addExpense, getExpenses, deleteExpense, getAnalytics, getDashboardStats, getPayments } = require('../controllers/owner.controller');
+const { getRooms, createRoom, updateRoom, deleteRoom, getTenants, addTenant, updateTenant, getComplaints, updateComplaintStatus, createNotice, getNotices, deleteNotice, addExpense, getExpenses, deleteExpense, getAnalytics, getDashboardStats, getPayments, cleanupOrphanedAccounts } = require('../controllers/owner.controller');
 
 const router = express.Router();
 
@@ -90,5 +90,9 @@ router.route('/payments')
 // Dashboard stats allowed (so they can see the dashboard)
 router.route('/dashboard-stats')
     .get(getDashboardStats);
+
+// Utility route to clean up orphaned accounts
+router.route('/cleanup-orphaned-accounts')
+    .post(cleanupOrphanedAccounts);
 
 module.exports = router;
