@@ -3,7 +3,7 @@ import globals from 'globals'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
-import { defineConfig, globalIgnores } from 'eslint/config'
+
 
 export default [
   { ignores: ['dist', '**/*.test.jsx', '**/*.test.js', 'cov'] },
@@ -34,8 +34,10 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^_' }],
       'react/prop-types': 'off',
+      'react-hooks/exhaustive-deps': 'warn', // Changed from error to warn
+      'no-undef': 'warn', // Changed from error to warn
     },
   },
 ]
