@@ -1,0 +1,30 @@
+﻿# Dependencies
+node_modules/
+
+# Environment Variables
+.env
+.env.local
+
+# Logs
+*.log
+*.txt
+
+# Test Results
+test-results/
+test-report.html
+test_results*.json
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Backups
+backups/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
