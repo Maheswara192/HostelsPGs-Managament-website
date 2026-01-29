@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Backend Service
+  server:
+    build: ./server
+    container_name: hostel-server
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+    restart: always
+
+  # Frontend Service
+  client:
+    build:
+      context: ./client
+      args:
+        # This URL is baked into the frontend build. 
+        # Since it runs in the user's browser, 'localhost' refers to their machine.
+        - VITE_API_URL=http://localhost:5000/api
+    container_name: hostel-client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+    restart: always

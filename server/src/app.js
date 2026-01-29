@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const { NODE_ENV } = require('./config/env');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 
 // Routes Import
 const authRoutes = require('./routes/auth.routes');
@@ -19,7 +23,17 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(helmet());
 app.use(cors());
+app.use(mongoSanitize());
+app.use(xss());
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use('/api', limiter);
 const path = require('path');
 
 // Join parent directory of server (root) + uploads

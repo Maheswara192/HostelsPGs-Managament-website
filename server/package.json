@@ -27,8 +27,12 @@
     "electron-to-chromium": "^1.5.267",
     "escalade": "^3.2.0",
     "express": "^5.2.1",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.2.1",
     "fraction.js": "^5.3.4",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "mongo-sanitize": "^1.1.0",
     "mongoose": "^9.1.2",
     "multer": "^2.0.2",
     "nanoid": "^3.3.11",
@@ -40,7 +44,8 @@
     "razorpay": "^2.9.6",
     "socket.io": "^4.8.3",
     "source-map-js": "^1.2.1",
-    "update-browserslist-db": "^1.2.3"
+    "update-browserslist-db": "^1.2.3",
+    "xss-clean": "^0.1.4"
   },
   "scripts": {
     "start": "node server.js",
