@@ -53,9 +53,9 @@ const Home = () => {
                                 v1.0 Now Live
                             </div>
 
-                            <h1 className="text-5xl lg:text-7xl font-extrabold mb-6 leading-[1.1] tracking-tight">
-                                Manage Hostels <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400">
+                            <h1 className="text-5xl lg:text-7xl font-extrabold mb-6 leading-[1.1] tracking-tight drop-shadow-2xl">
+                                <span className="text-white">Manage Hostels</span> <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-sky-300 to-cyan-300 animate-gradient-x brightness-110">
                                     Without Chaos.
                                 </span>
                             </h1>
