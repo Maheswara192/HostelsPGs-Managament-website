@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSocketListener } from '../../hooks/useSocketListener';
 import toast from 'react-hot-toast';
 import Skeleton from '../../components/common/Skeleton';
+import RevenueChart from '../../components/charts/RevenueChart';
 
 const OwnerDashboard = () => {
     const { user } = useAuth();
@@ -21,11 +22,18 @@ const OwnerDashboard = () => {
         pendingRent: 0,
         complaints: 0
     });
+    const [revenueData, setRevenueData] = useState([]);
 
     const fetchStats = async () => {
         try {
-            const res = await ownerService.getDashboardStats();
-            if (res.success) setStats(res.data);
+            const [statsRes, paymentsRes] = await Promise.all([
+                ownerService.getDashboardStats(),
+                ownerService.getPayments()
+            ]);
+
+            if (statsRes.success) setStats(statsRes.data);
+            if (paymentsRes.success) setRevenueData(paymentsRes.data);
+
         } catch (err) {
             console.error("Dashboard Fetch Error", err);
         } finally {
@@ -143,6 +151,9 @@ const OwnerDashboard = () => {
                     </>
                 )}
             </div>
+
+            {/* Revenue Chart */}
+            <RevenueChart payments={revenueData} loading={loading} />
 
             {/* Quick Actions & Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
