@@ -7,6 +7,7 @@ import Button from '../../components/common/Button';
 import { useNavigate } from 'react-router-dom';
 import { useSocketListener } from '../../hooks/useSocketListener';
 import toast from 'react-hot-toast';
+import Skeleton from '../../components/common/Skeleton';
 
 const OwnerDashboard = () => {
     const { user } = useAuth();
@@ -101,32 +102,46 @@ const OwnerDashboard = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatsCard
-                    title="Total Tenants"
-                    value={stats.tenants}
-                    icon={<Users size={24} />}
-                    color="bg-indigo-50 text-indigo-600"
-                    trend={12} // Mock trend for demo
-                />
-                <StatsCard
-                    title="Occupancy"
-                    value={`${stats.occupancy}%`}
-                    icon={<Bed size={24} />}
-                    color="bg-blue-50 text-blue-600"
-                    trend={-2}
-                />
-                <StatsCard
-                    title="Pending Rent"
-                    value={`₹${stats.pendingRent}`}
-                    icon={<IndianRupee size={24} />}
-                    color="bg-amber-50 text-amber-600"
-                />
-                <StatsCard
-                    title="Action Items"
-                    value={stats.complaints}
-                    icon={<AlertCircle size={24} />}
-                    color="bg-red-50 text-red-600"
-                />
+                {loading ? (
+                    [1, 2, 3, 4].map((i) => (
+                        <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
+                            <Skeleton className="h-12 w-12 rounded-lg" />
+                            <div className="flex-1 space-y-2">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-8 w-16" />
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <>
+                        <StatsCard
+                            title="Total Tenants"
+                            value={stats.tenants}
+                            icon={<Users size={24} />}
+                            color="bg-indigo-50 text-indigo-600"
+                            trend={12} // Mock trend for demo
+                        />
+                        <StatsCard
+                            title="Occupancy"
+                            value={`${stats.occupancy}%`}
+                            icon={<Bed size={24} />}
+                            color="bg-blue-50 text-blue-600"
+                            trend={-2}
+                        />
+                        <StatsCard
+                            title="Pending Rent"
+                            value={`₹${stats.pendingRent}`}
+                            icon={<IndianRupee size={24} />}
+                            color="bg-amber-50 text-amber-600"
+                        />
+                        <StatsCard
+                            title="Action Items"
+                            value={stats.complaints}
+                            icon={<AlertCircle size={24} />}
+                            color="bg-red-50 text-red-600"
+                        />
+                    </>
+                )}
             </div>
 
             {/* Quick Actions & Recent Activity */}

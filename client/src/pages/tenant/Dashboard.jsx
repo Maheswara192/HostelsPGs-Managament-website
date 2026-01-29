@@ -8,6 +8,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { useSocketListener } from '../../hooks/useSocketListener';
 import toast from 'react-hot-toast';
+import Skeleton from '../../components/common/Skeleton';
 
 const TenantDashboard = () => {
     const { user } = useAuth();
@@ -121,37 +122,61 @@ const TenantDashboard = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatsCard
-                    title="My Room"
-                    value={room?.number || 'Not Assigned'}
-                    icon={<Home size={24} />}
-                    color="bg-blue-50 text-blue-600"
-                    trend={0} // Placeholder layout
-                />
-                <StatsCard
-                    title="Rent Due"
-                    value={`₹${dashboardData?.tenant?.rentAmount || 0}`}
-                    icon={<CreditCard size={24} />}
-                    color="bg-emerald-50 text-emerald-600"
-                />
+                {loading ? (
+                    <>
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
+                                <Skeleton className="h-12 w-12 rounded-lg" />
+                                <div className="flex-1 space-y-2">
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-8 w-16" />
+                                </div>
+                            </div>
+                        ))}
+                    </>
+                ) : (
+                    <>
+                        <StatsCard
+                            title="My Room"
+                            value={room?.number || 'Not Assigned'}
+                            icon={<Home size={24} />}
+                            color="bg-blue-50 text-blue-600"
+                            trend={0}
+                        />
+                        <StatsCard
+                            title="Rent Due"
+                            value={`₹${dashboardData?.tenant?.rentAmount || 0}`}
+                            icon={<CreditCard size={24} />}
+                            color="bg-emerald-50 text-emerald-600"
+                        >
+                            {dashboardData?.tenant?.rentAmount > 0 && (
+                                <Link to="/tenant/payments">
+                                    <button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm transition-colors animate-pulse-slow">
+                                        Pay Now
+                                    </button>
+                                </Link>
+                            )}
+                        </StatsCard>
 
-                {/* Notices as a Card */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
-                            <Megaphone size={20} />
+                        {/* Notices as a Card */}
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-shadow hover:shadow-md">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
+                                    <Megaphone size={20} />
+                                </div>
+                                <h3 className="font-semibold text-slate-700">Latest Notice</h3>
+                            </div>
+                            {notices && notices.length > 0 ? (
+                                <div>
+                                    <p className="font-heading font-medium text-slate-900 truncate" title={notices[0].title}>{notices[0].title}</p>
+                                    <p className="text-sm text-slate-500 mt-1 line-clamp-2">{notices[0].message}</p>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-400">No new notices from management.</p>
+                            )}
                         </div>
-                        <h3 className="font-semibold text-slate-700">Latest Notice</h3>
-                    </div>
-                    {notices && notices.length > 0 ? (
-                        <div>
-                            <p className="font-heading font-medium text-slate-900 truncate" title={notices[0].title}>{notices[0].title}</p>
-                            <p className="text-sm text-slate-500 mt-1 line-clamp-2">{notices[0].message}</p>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-slate-400">No new notices from management.</p>
-                    )}
-                </div>
+                    </>
+                )}
             </div>
 
             {/* Recent Activity Section */}
