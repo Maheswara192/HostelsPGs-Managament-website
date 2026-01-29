@@ -10,7 +10,7 @@ const Footer = () => {
                     <div className="col-span-1 md:col-span-1">
                         <div className="flex items-center space-x-2 mb-4 text-white">
                             <Building2 size={32} className="text-primary-light" />
-                            <span className="text-2xl font-bold">HostelMate</span>
+                            <span className="text-2xl font-bold">StayManager</span>
                         </div>
                         <p className="text-slate-400 mb-6">Simplifying hostel and PG management with modern technology.</p>
                         <div className="flex space-x-4">
@@ -49,7 +49,7 @@ const Footer = () => {
                         <ul className="space-y-3">
                             <li className="flex items-center space-x-3">
                                 <Mail size={18} className="text-primary-light" />
-                                <span>support@hostelmate.com</span>
+                                <span>support@staymanager.com</span>
                             </li>
                             <li className="flex items-center space-x-3">
                                 <Phone size={18} className="text-primary-light" />
@@ -64,7 +64,7 @@ const Footer = () => {
                 </div>
 
                 <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center bg-slate-900">
-                    <p className="text-slate-500 text-sm">© 2026 HostelMate. All rights reserved.</p>
+                    <p className="text-slate-500 text-sm">© 2026 StayManager. All rights reserved.</p>
                     <div className="flex space-x-6 mt-4 md:mt-0 text-sm">
                         <a href="#" className="text-slate-500 hover:text-white transition-colors">Privacy Policy</a>
                         <a href="#" className="text-slate-500 hover:text-white transition-colors">Terms of Service</a>
