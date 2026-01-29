@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
-const Input = ({ label, error, className = '', type, ...props }) => {
+const Input = ({ label, error, className = '', type, icon: Icon, ...props }) => {
     const inputId = props.id || props.name;
     const [showPassword, setShowPassword] = useState(false);
 
@@ -13,10 +13,15 @@ const Input = ({ label, error, className = '', type, ...props }) => {
         <div className={`w-full ${className}`}>
             {label && <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>}
             <div className="relative">
+                {Icon && (
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <Icon size={18} />
+                    </div>
+                )}
                 <input
                     id={inputId}
                     type={inputType}
-                    className={`input-field ${error ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : ''} ${isPasswordField ? 'pr-10' : ''}`}
+                    className={`input-field ${error ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : ''} ${isPasswordField ? 'pr-10' : ''} ${Icon ? 'pl-10' : ''}`}
                     {...props}
                 />
                 {isPasswordField && (
