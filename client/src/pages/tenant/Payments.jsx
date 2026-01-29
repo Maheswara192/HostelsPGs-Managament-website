@@ -115,6 +115,20 @@ const Payments = () => {
                 </div>
             )}
 
+            {/* Test Mode Banner */}
+            {/* Logic: We don't have the key directly here until they click pay, 
+                but we can check if the environment variable is exposed or just assume based on failure. 
+                Instead, we'll check if the backend response key had 'test' in it during the last attempt or generally indicate caution. 
+                But better, let's just show a general 'How to Pay' hint. 
+            */}
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
+                <p className="text-blue-700 font-medium">Payment Information</p>
+                <p className="text-sm text-blue-600 mt-1">
+                    If using <strong>Test Mode</strong> cards/UPI, real scanning (GPay/PhonePe) will <span className="underline decoration-wavy">not work</span>.
+                    Please use the "Test UPI" option or simulate success if available.
+                </p>
+            </div>
+
             {/* Pay Rent Section */}
             <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-8 flex justify-between items-center transition-all hover:shadow-lg">
                 <div>
