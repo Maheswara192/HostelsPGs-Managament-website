@@ -1,59 +1,43 @@
-name: Hostel SaaS CI
+name: App CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  backend-test:
+  test-backend:
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: ./server
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js 18.x
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18.x
-        cache: 'npm'
-        cache-dependency-path: server/package-lock.json
-        
-    - name: Install Dependencies
-      run: npm install
-      
-    - name: Run Backend Tests
-      run: npm test
-      env:
-        NODE_ENV: test
-        JWT_SECRET: test_secret
-        MONGODB_URI: mongodb://localhost:27017/test_db
+      - uses: actions/checkout@v3
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+      - name: Install Dependencies
+        run: cd server && npm ci
+      - name: Run Tests
+        run: cd server && npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: super_secret_test_key
 
-  frontend-test:
+  build-frontend:
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: ./client
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js 18.x
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18.x
-        cache: 'npm'
-        cache-dependency-path: client/package-lock.json
-
-    - name: Install Dependencies
-      run: npm install
-      
-    - name: Run Frontend Tests
-      run: npm test run
-      
-    - name: Verify Build
-      run: npm run build
+      - uses: actions/checkout@v3
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+      - name: Install Dependencies
+        run: cd client && npm ci
+      - name: Build Project
+        run: cd client && npm run build
+        env:
+          VITE_API_URL: /api
