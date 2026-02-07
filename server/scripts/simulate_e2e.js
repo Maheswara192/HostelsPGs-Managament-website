@@ -1,10 +1,5 @@
 process.env.NODE_ENV = 'test';
 const mongoose = require('mongoose');
-const axios = require('axios'); // Use axios for real HTTP calls if server is running, or mock?
-// Actually, let's use the internal app if possible, or just require app and use supertest-like behavior manually?
-// No, simpler: Use the actual models and logic, but mock the requests?
-// Or better: Just use supertest with the app object in a script.
-
 const request = require('supertest');
 const app = require('../src/app');
 const User = require('../src/models/User');
@@ -12,12 +7,14 @@ const PG = require('../src/models/PG');
 const AuditLog = require('../src/models/AuditLog');
 const { connectDB } = require('../src/config/db');
 
-// Mock Data
+// Mock Data for Simulation
 const ADMIN_USER = { name: "Super Admin", email: "msg_admin@hostel.com", password: "adminpassword", role: "admin" };
 const OWNER_USER = { name: "E2E Owner", email: `owner_${Date.now()}@test.com`, password: "password123", role: "owner", pgName: "E2E Hostel" };
 const TENANT_USER = { name: "E2E Tenant", email: `tenant_${Date.now()}@test.com`, mobile: "9988776655", rentAmount: 5000 };
 
 const fs = require('fs');
+
+// Helper to log to console and file simultaneously
 const log = (msg) => {
     console.log(msg);
     fs.appendFileSync('sim_log.txt', msg + '\n');
@@ -25,16 +22,29 @@ const log = (msg) => {
 
 const { MONGODB_URI } = require('../src/config/env');
 
+/**
+ * Run End-to-End Simulation
+ * Simulates a full lifecycle:
+ * 1. Admin Login
+ * 2. Owner Registration & PG Creation
+ * 3. Room Management
+ * 4. Tenant Onboarding (Transactional)
+ * 5. Backup Triggering
+ * 6. Audit Log Verification
+ */
 const runSimulation = async () => {
     try {
         log("🔵 Connecting to DB...");
-        // Use Cloud URI but switch DB to 'hostel_saas_test'
+        // Use Cloud URI but switch DB to 'hostel_saas_test' to avoid polluting prod
         const testURI = MONGODB_URI.replace('hostel_saas_db', 'hostel_saas_test');
 
-        await mongoose.connect(testURI);
+        await mongoose.connect(testURI, {
+            serverSelectionTimeoutMS: 5000 // 5 seconds timeout to prevent hanging
+        });
         log("✅ DB Connected");
 
         // 1. CLEANUP
+        // Remove previous test data to ensure a clean state
         log("🧹 Cleaning up...");
         await User.deleteMany({ email: { $in: [ADMIN_USER.email, OWNER_USER.email, TENANT_USER.email] } });
         await PG.deleteMany({ name: OWNER_USER.pgName });
@@ -43,10 +53,10 @@ const runSimulation = async () => {
         console.log("👤 Setting up Admin...");
         // Register (ignore error if exists)
         await request(app).post('/api/auth/register').send(ADMIN_USER);
-        // Force Role
+        // Force Role to 'admin' directly in DB as register route prevents it
         await User.findOneAndUpdate({ email: ADMIN_USER.email }, { role: 'admin' }, { upsert: true });
 
-        // Login Admin
+        // Login Admin to get Token
         let res = await request(app).post('/api/auth/login').send({ email: ADMIN_USER.email, password: ADMIN_USER.password });
         if (!res.body.success) throw new Error(`Admin Login Failed: ${res.status} ${JSON.stringify(res.body)}`);
         const adminToken = res.body.data.token;
@@ -57,7 +67,6 @@ const runSimulation = async () => {
         res = await request(app).post('/api/auth/register').send(OWNER_USER);
         if (res.status !== 201) throw new Error(`Owner Register Failed: ${JSON.stringify(res.body)}`);
         const ownerToken = res.body.data.token;
-        const pgId = res.body.data.pg_id;
         console.log("✅ Owner Registered & PG Created");
 
         // 4. ADD ROOM
@@ -75,6 +84,7 @@ const runSimulation = async () => {
         console.log("✅ Room Added");
 
         // 5. ADD TENANT (TRANSACTIONAL)
+        // This tests the atomic transaction logic in the controller
         console.log("👥 Adding Tenant (Transactional)...");
         res = await request(app).post('/api/owner/tenants')
             .set('Authorization', `Bearer ${ownerToken}`)
@@ -88,10 +98,10 @@ const runSimulation = async () => {
             });
 
         if (res.status !== 201) throw new Error(`Add Tenant Failed: ${JSON.stringify(res.body)}`);
-        const tenantId = res.body.data._id;
         console.log("✅ Tenant Added Successfully");
 
         // 6. TRIGGER BACKUP (ADMIN)
+        // Tests the background backup service
         console.log("💾 Triggering Backup...");
         res = await request(app).post('/api/admin/backups')
             .set('Authorization', `Bearer ${adminToken}`);
@@ -99,6 +109,7 @@ const runSimulation = async () => {
         console.log("✅ Backup Triggered");
 
         // 7. VERIFY AUDIT LOGS
+        // Ensures important actions are being logged
         console.log("🔍 Verifying Audit Logs...");
         res = await request(app).get('/api/admin/audit-logs').set('Authorization', `Bearer ${adminToken}`);
         const logs = res.body.data;

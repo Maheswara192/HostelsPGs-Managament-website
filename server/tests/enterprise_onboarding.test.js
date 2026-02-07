@@ -99,14 +99,7 @@ describe('Enterprise Onboarding & Analytics', () => {
                 rentAmount: 5000
             });
 
-        // Attempt Login (using any password, but here we need valid pass check first, 
-        // actually standard login flow checks pass then status, or status then pass?
-        // My code: checks user exists -> checks status -> checks password. 
-        // Wait, current code checks user exists -> checks status -> checks password. 
-        // But for `addTenant`, the password is partial/placeholder. So `bcrypt` compare might fail or succeed depending on logic.
-        // Actually, `active` check is BEFORE `bcrypt` check in my updated code? 
-        // Let's check code: `if (!user) ... return 401`. Then `if status === PENDING ... return 403`. Then `bcrypt`. 
-        // So password doesn't matter for the 403 check as long as user exists.
+        // Attempt Login (Expect failure due to PENDING_ACTIVATION status)
 
         const loginRes = await request(app).post('/api/auth/login').send({
             email: 'pending@test.com',

@@ -1,90 +1,78 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { CreditCard, AlertCircle, Home, Megaphone, LogOut, History, User } from 'lucide-react';
+import { CreditCard, AlertCircle, Home, Megaphone, LogOut, History, User, UserPlus } from 'lucide-react';
 import tenantService from '../../services/tenant.service';
+import securityService from '../../services/security.service';
 import StatsCard from '../../components/common/StatsCard';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { useSocketListener } from '../../hooks/useSocketListener';
 import toast from 'react-hot-toast';
 import Skeleton from '../../components/common/Skeleton';
 
 const TenantDashboard = () => {
     const { user } = useAuth();
     const [dashboardData, setDashboardData] = useState(null);
-    const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Exit Request State
+    // Guest Request State
+    const [showGuestModal, setShowGuestModal] = useState(false);
+    const [guestData, setGuestData] = useState({ guest_name: '', relation: '', fromDate: '', toDate: '' });
+    const [submittingGuest, setSubmittingGuest] = useState(false);
+    const [myRequests, setMyRequests] = useState([]);
     const [showExitModal, setShowExitModal] = useState(false);
-    const [exitReason, setExitReason] = useState('');
-    const [exitDate, setExitDate] = useState('');
-    const [submittingExit, setSubmittingExit] = useState(false);
 
+    const today = new Date().toISOString().split('T')[0];
 
     const fetchDashboard = async () => {
         try {
-            const [dashRes, noticesRes] = await Promise.all([
-                tenantService.getDashboard(),
-                tenantService.getNotices()
-            ]);
-
-            if (dashRes.success) setDashboardData(dashRes.data);
-            if (noticesRes.success) setNotices(noticesRes?.data || []);
-
+            const res = await tenantService.getDashboard();
+            setDashboardData(res);
         } catch (error) {
-            console.error("Failed to load dashboard data", error);
+            console.error(error);
+            toast.error('Failed to load dashboard');
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchDashboard();
-    }, []);
-
-    // Real-time Listeners
-    useSocketListener('notice:new', (notice) => {
-        toast(() => (
-            <span>
-                <b>New Notice:</b> {notice.title}
-            </span>
-        ), { icon: '📢', duration: 5000 });
-        fetchDashboard();
-    });
-
-    useSocketListener('rent:updated', () => {
-        toast.success("Rent status updated!");
-        fetchDashboard();
-    });
-
-    const { room, pg, recentPayments, tenant } = dashboardData || {};
-
-    const handleRequestExit = async (e) => {
-        e.preventDefault();
-        setSubmittingExit(true);
+    const fetchGuestRequests = async () => {
         try {
-            const res = await tenantService.requestExit({ reason: exitReason, date: exitDate });
-            if (res.success) {
-                setDashboardData(prev => ({ ...prev, tenant: res.data }));
-                setShowExitModal(false);
-                alert('Exit request submitted successfully');
-            }
+            const res = await securityService.getMyRequests();
+            setMyRequests(res);
         } catch (error) {
             console.error(error);
-            alert('Failed to submit exit request');
-        } finally {
-            setSubmittingExit(false);
         }
     };
 
-    const today = new Date().toISOString().split('T')[0];
+    useEffect(() => {
+        fetchDashboard();
+        fetchGuestRequests();
+    }, []);
 
+    const handleRequestGuest = async (e) => {
+        e.preventDefault();
+        setSubmittingGuest(true);
+        try {
+            await securityService.createGuestRequest(guestData);
+            toast.success('Guest request submitted');
+            setShowGuestModal(false);
+            setGuestData({ guest_name: '', relation: '', fromDate: '', toDate: '' });
+            fetchGuestRequests();
+        } catch (error) {
+            toast.error('Failed to submit request');
+        } finally {
+            setSubmittingGuest(false);
+        }
+    };
+
+    if (loading) return <Skeleton className="h-96 w-full" />;
+
+    const pg = dashboardData?.pg;
+    const tenant = dashboardData?.tenant;
 
     return (
         <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
-            {/* Header Section */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
@@ -99,198 +87,116 @@ const TenantDashboard = () => {
                     </div>
                 </div>
 
-                {tenant?.exit_request?.status === 'PENDING' ? (
-                    <div className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-sm font-medium flex items-center gap-2">
-                        <History size={16} /> Exit Request Pending
-                    </div>
-                ) : tenant?.status === 'on_notice' ? (
-                    <div className="px-4 py-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg text-sm font-medium">
-                        On Notice (Ends: {new Date(tenant?.exit_date).toLocaleDateString()})
-                    </div>
-                ) : (
+                <div className="flex gap-2">
                     <Button
-                        variant="danger"
-                        onClick={() => setShowExitModal(true)}
-                        className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                        variant="secondary"
+                        onClick={() => setShowGuestModal(true)}
+                        className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200"
                     >
-                        <LogOut size={18} className="mr-2" />
-                        Request Exit
+                        <UserPlus size={18} className="mr-2" />
+                        Request Guest
                     </Button>
-                )}
-            </header>
 
+                    {tenant?.exit_request?.status === 'PENDING' ? (
+                        <div className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-sm font-medium flex items-center gap-2">
+                            <History size={16} /> Exit Request Pending
+                        </div>
+                    ) : tenant?.status === 'on_notice' ? (
+                        <div className="px-4 py-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg text-sm font-medium">
+                            On Notice (Ends: {new Date(tenant?.exit_date).toLocaleDateString()})
+                        </div>
+                    ) : (
+                        <Button
+                            variant="danger"
+                            onClick={() => setShowExitModal(true)}
+                            className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                        >
+                            <LogOut size={18} className="mr-2" />
+                            Request Exit
+                        </Button>
+                    )}
+                </div>
+            </header>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {loading ? (
-                    <>
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
-                                <Skeleton className="h-12 w-12 rounded-lg" />
-                                <div className="flex-1 space-y-2">
-                                    <Skeleton className="h-4 w-24" />
-                                    <Skeleton className="h-8 w-16" />
-                                </div>
-                            </div>
-                        ))}
-                    </>
-                ) : (
-                    <>
-                        <StatsCard
-                            title="My Room"
-                            value={room?.number || 'Not Assigned'}
-                            icon={<Home size={24} />}
-                            color="bg-blue-50 text-blue-600"
-                            trend={0}
-                        />
-                        <StatsCard
-                            title="Rent Due"
-                            value={`₹${dashboardData?.tenant?.rentAmount || 0}`}
-                            icon={<CreditCard size={24} />}
-                            color="bg-emerald-50 text-emerald-600"
-                        >
-                            {dashboardData?.tenant?.rentAmount > 0 && (
-                                <Link to="/tenant/payments">
-                                    <button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm transition-colors animate-pulse-slow">
-                                        Pay Now
-                                    </button>
-                                </Link>
-                            )}
-                        </StatsCard>
-
-                        {/* Notices as a Card */}
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-shadow hover:shadow-md">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
-                                    <Megaphone size={20} />
-                                </div>
-                                <h3 className="font-semibold text-slate-700">Latest Notice</h3>
-                            </div>
-                            {notices && notices.length > 0 ? (
-                                <div>
-                                    <p className="font-heading font-medium text-slate-900 truncate" title={notices[0].title}>{notices[0].title}</p>
-                                    <p className="text-sm text-slate-500 mt-1 line-clamp-2">{notices[0].message}</p>
-                                </div>
-                            ) : (
-                                <p className="text-sm text-slate-400">No new notices from management.</p>
-                            )}
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {/* Recent Activity Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Recent Payments */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-heading font-semibold text-slate-900">Recent Payments</h3>
-                        <Link to="/tenant/payments" className="text-sm font-medium text-primary-600 hover:text-primary-700">View All</Link>
-                    </div>
-                    <div className="space-y-4">
-                        {loading ? (
-                            <p className="text-slate-400 text-sm">Loading payments...</p>
-                        ) : recentPayments?.length > 0 ? (
-                            recentPayments.map(pay => (
-                                <div key={pay._id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                            ₹
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-900">Rent Payment</p>
-                                            <p className="text-xs text-slate-500">{new Date(pay.transaction_date).toLocaleDateString()}</p>
-                                        </div>
-                                    </div>
-                                    <span className="font-heading font-bold text-slate-700">₹{pay.amount}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                <p className="text-sm text-slate-500">No payment history found.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Quick Actions / Help */}
-                <div className="space-y-6">
-                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-lg">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-lg font-heading font-bold mb-1">Need Help?</h3>
-                                <p className="text-slate-300 text-sm mb-4">Facing issues with your room or amenities?</p>
-                            </div>
-                            <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                                <AlertCircle size={24} />
-                            </div>
-                        </div>
-                        <Link to="/tenant/complaints">
-                            <Button variant="secondary" className="w-full justify-center bg-white text-slate-900 border-none hover:bg-slate-100">
-                                Report an Issue
-                            </Button>
+                <StatsCard
+                    title="My Room"
+                    value={dashboardData?.room?.number || 'Not Assigned'}
+                    icon={<Home size={24} />}
+                    color="bg-blue-50 text-blue-600"
+                    trend={0}
+                />
+                <StatsCard
+                    title="Rent Due"
+                    value={`₹${dashboardData?.tenant?.rentAmount || 0}`}
+                    icon={<CreditCard size={24} />}
+                    color="bg-emerald-50 text-emerald-600"
+                >
+                    {dashboardData?.tenant?.rentAmount > 0 && (
+                        <Link to="/tenant/payments">
+                            <button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm transition-colors animate-pulse-slow">
+                                Pay Now
+                            </button>
                         </Link>
-                    </div>
+                    )}
+                </StatsCard>
 
+                <StatsCard
+                    title="Last Cleaned"
+                    value={dashboardData?.lastCleaned ? new Date(dashboardData.lastCleaned).toLocaleDateString() : 'Pending'}
+                    icon={<div className="text-purple-600">✨</div>}
+                    color="bg-purple-50 text-purple-600"
+                />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Quick Actions / Guests */}
+                <div className="space-y-6">
+                    {/* Active Guest Requests */}
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4">Manager Contact</h3>
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl">
-                                {pg?.name?.charAt(0) || 'M'}
-                            </div>
-                            <div>
-                                <p className="text-slate-900 font-medium">{pg?.name || 'Property Manager'}</p>
-                                <p className="text-slate-500 text-sm">{pg?.contact || 'No contact info'}</p>
-                            </div>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-heading font-semibold text-slate-900">Guest History</h3>
+                        </div>
+                        <div className="space-y-2">
+                            {myRequests.length === 0 ? (
+                                <p className="text-slate-400 text-sm">No recent guest requests.</p>
+                            ) : (
+                                myRequests.slice(0, 3).map(req => (
+                                    <div key={req._id} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg text-sm">
+                                        <div>
+                                            <span className="font-semibold text-slate-700">{req.guest_name}</span>
+                                            <span className="text-slate-500 text-xs ml-2">({new Date(req.fromDate).toLocaleDateString()})</span>
+                                        </div>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                            req.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                            {req.status}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Exit Request Modal */}
-            {showExitModal && (
+            {/* Guest Modal */}
+            {showGuestModal && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-100">
-                        <h2 className="text-xl font-heading font-bold text-slate-900 mb-2">Request Exit</h2>
-                        <p className="text-sm text-slate-500 mb-6">We&apos;re sorry to see you go. Please let us know when and why.</p>
-
-                        <form onSubmit={handleRequestExit} className="space-y-4">
-                            <Input
-                                label="Exit Date"
-                                type="date"
-                                required
-                                min={today}
-                                value={exitDate}
-                                onChange={(e) => setExitDate(e.target.value)}
-                            />
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1.5">Reason for Leaving</label>
-                                <textarea
-                                    required
-                                    className="input-field min-h-[100px] resize-none"
-                                    placeholder="e.g., Relocating, Job Change..."
-                                    value={exitReason}
-                                    onChange={(e) => setExitReason(e.target.value)}
-                                />
+                        <h2 className="text-xl font-heading font-bold text-slate-900 mb-4">Request Overnight Guest</h2>
+                        <form onSubmit={handleRequestGuest} className="space-y-4">
+                            <Input label="Guest Name" required value={guestData.guest_name} onChange={e => setGuestData({ ...guestData, guest_name: e.target.value })} />
+                            <Input label="Relation" required value={guestData.relation} onChange={e => setGuestData({ ...guestData, relation: e.target.value })} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input type="date" label="From" required min={today} value={guestData.fromDate} onChange={e => setGuestData({ ...guestData, fromDate: e.target.value })} />
+                                <Input type="date" label="To" required min={guestData.fromDate || today} value={guestData.toDate} onChange={e => setGuestData({ ...guestData, toDate: e.target.value })} />
                             </div>
-
-                            <div className="flex space-x-3 pt-2">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    className="flex-1"
-                                    onClick={() => setShowExitModal(false)}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant="danger"
-                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                                    isLoading={submittingExit}
-                                >
-                                    Submit Request
-                                </Button>
+                            <div className="flex space-x-3 pt-4">
+                                <Button type="button" variant="ghost" className="flex-1" onClick={() => setShowGuestModal(false)}>Cancel</Button>
+                                <Button type="submit" className="flex-1" isLoading={submittingGuest}>Submit</Button>
                             </div>
                         </form>
                     </div>

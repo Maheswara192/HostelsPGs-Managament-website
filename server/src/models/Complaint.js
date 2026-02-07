@@ -13,11 +13,13 @@ const complaintSchema = new mongoose.Schema({
     },
     title: {
         type: String,
-        required: true
+        required: true,
+        maxlength: [100, 'Title cannot exceed 100 characters']
     },
     description: {
         type: String,
-        required: true
+        required: true,
+        maxlength: [1000, 'Description cannot exceed 1000 characters']
     },
     status: {
         type: String,

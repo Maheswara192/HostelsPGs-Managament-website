@@ -14,6 +14,13 @@ const initCronJobs = () => {
     });
 
     console.log('📅 Cron Jobs Initialized: Daily Backup scheduled for Midnight.');
+
+    // Schedule Nudge Job (e.g., Daily at 10 AM)
+    const { checkPendingActivations } = require('./nudge.service');
+    cron.schedule('0 10 * * *', async () => {
+        console.log('⏰ Running Daily Nudge Job...');
+        await checkPendingActivations();
+    });
 };
 
 module.exports = { initCronJobs };

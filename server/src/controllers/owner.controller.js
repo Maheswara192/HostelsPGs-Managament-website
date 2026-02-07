@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const OnboardingAnalytics = require('../models/OnboardingAnalytics');
 const tokenService = require('../services/token.service');
 const communicationService = require('../services/communication.service');
+const { PLAN_LIMITS } = require('../config/plans');
 
 // @desc    Get all rooms for the owner's PG
 // @route   GET /api/owner/rooms
@@ -29,7 +30,10 @@ exports.getRooms = asyncHandler(async (req, res) => {
 // @desc    Create a new room
 // @route   POST /api/owner/rooms
 // @access  Private (Owner)
-exports.createRoom = async (req, res) => {
+// @desc    Create a new room
+// @route   POST /api/owner/rooms
+// @access  Private (Owner)
+exports.createRoom = async (req, res, next) => {
   try {
     const { roomNumber, type, rent, capacity, amenities } = req.body;
 
@@ -50,7 +54,7 @@ exports.createRoom = async (req, res) => {
 
     res.status(201).json({ success: true, data: room });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server Error' });
+    next(error);
   }
 };
 
@@ -132,12 +136,39 @@ exports.getTenants = async (req, res) => {
   }
 };
 
-// @desc    Add a new tenant
-// @route   POST /api/owner/tenants
-// @access  Private (Owner)
-exports.addTenant = async (req, res) => {
+/**
+ * @desc    Add a new tenant
+ * @route   POST /api/owner/tenants
+ * @access  Private (Owner)
+ * @description
+ * Orchestra complex onboarding flow:
+ * 1. Validates Room capacity and existing users.
+ * 2. Uses Atomic Transaction to create User and Tenant profile.
+ * 3. Handles "Orphaned" accounts if a previous tenant add failed.
+ * 4. Triggers async email/WhatsApp notifications.
+ * 
+ * @param {string} name - Tenant Name
+ * @param {string} email - Unique Email
+ * @param {string} mobile - Contact Number
+ * @param {ObjectId} room_id - Room to assign
+ */
+exports.addTenant = async (req, res, next) => {
   try {
     const { name, email, password, mobile, room_id, rentAmount, deposit } = req.body;
+
+    // VALIDATION
+    if (rentAmount < 0) {
+      return res.status(400).json({ success: false, message: 'Rent amount cannot be negative' });
+    }
+    const mobileRegex = /^[0-9]{10}$/;
+    if (mobile && !mobileRegex.test(mobile)) {
+      return res.status(400).json({ success: false, message: 'Invalid mobile number format' });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !emailRegex.test(email)) {
+      // Basic check, though usually handled by frontend or mongoose
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
 
     console.log("--- ADD TENANT DEBUG ---");
     console.log("Body:", JSON.stringify(req.body, null, 2));
@@ -197,6 +228,22 @@ exports.addTenant = async (req, res) => {
     if (existingTenantsCount >= room.capacity) {
       return res.status(400).json({ success: false, message: `Room ${room.number} is full (Capacity: ${room.capacity})` });
     }
+
+    // --- SUBSCRIPTION CHECK ---
+    const pg = await PG.findById(req.user.pg_id);
+    const currentPlan = pg.subscription.plan || 'Free';
+    const planLimit = PLAN_LIMITS[currentPlan] ? PLAN_LIMITS[currentPlan].maxTenants : 5;
+
+    // Count ALL active tenants in the PG
+    const totalPgTenants = await Tenant.countDocuments({ pg_id: req.user.pg_id, status: { $ne: 'inactive' } });
+
+    if (totalPgTenants >= planLimit) {
+      return res.status(403).json({
+        success: false,
+        message: `Plan Limit Reached! Your ${currentPlan} plan allows max ${planLimit} tenants. Please upgrade to add more.`
+      });
+    }
+    // --------------------------
 
     // Prepare Data
     const preferredLanguage = req.body.preferredLanguage || 'en';
@@ -281,8 +328,7 @@ exports.addTenant = async (req, res) => {
 
   } catch (error) {
     console.error("Add Tenant Error:", error);
-    // Standard error response
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
@@ -631,6 +677,19 @@ exports.exportFinancials = async (req, res) => {
     const pgId = req.user.pg_id;
     const { format } = req.query; // 'csv'
 
+    // --- SUBSCRIPTION CHECK ---
+    const pg = await PG.findById(pgId);
+    const currentPlan = pg.subscription.plan || 'Free';
+    const allowedFeatures = PLAN_LIMITS[currentPlan] ? PLAN_LIMITS[currentPlan].features : [];
+
+    if (!allowedFeatures.includes('Data Export (CSV)')) {
+      return res.status(403).json({
+        success: false,
+        message: `Feature Locked! Data Export is available on Pro plan and above. Current Plan: ${currentPlan}`
+      });
+    }
+    // --------------------------
+
     // 1. Fetch Data
     const payments = await Payment.find({ pg_id: pgId, status: 'SUCCESS' }).sort({ transaction_date: -1 }).populate('tenant_id', 'contact_number');
     const expenses = await Expense.find({ pg_id: pgId }).sort({ date: -1 });
@@ -680,9 +739,20 @@ exports.exportFinancials = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
-// @desc    Get Dashboard Stats (Pending Rent etc)
-// @route   GET /api/owner/dashboard-stats
-// @access  Private (Owner)
+/**
+ * @desc    Get Dashboard Statistics
+ * @route   GET /api/owner/dashboard-stats
+ * @access  Private (Owner)
+ * @description
+ * Calculates high-level metrics for the owner dashboard using efficient MongoDB Aggregations.
+ * Metrics include:
+ * - Active Tenants & Total Expected Rent
+ * - Rent Collected vs Pending (Current Month)
+ * - Occupancy Rate
+ * - Open Complaints
+ * 
+ * Optimization: Uses Aggregation Pipeline ($group, $sum) to avoid fetching all documents into memory.
+ */
 exports.getDashboardStats = async (req, res) => {
   try {
     const pgId = req.user.pg_id;
@@ -694,10 +764,14 @@ exports.getDashboardStats = async (req, res) => {
     endOfMonth.setMonth(endOfMonth.getMonth() + 1);
 
     // 1. Get Active Tenants count and Total Expected Rent
-    // Assuming all active tenants are expected to pay rent this month
-    const activeTenants = await Tenant.find({ pg_id: pgId, status: { $ne: 'inactive' } });
-    const totalTenants = activeTenants.length;
-    const expectedRent = activeTenants.reduce((acc, t) => acc + (t.rentAmount || 0), 0);
+    // 1. Get Active Tenants count and Total Expected Rent (DB Aggregation)
+    const tenantStats = await Tenant.aggregate([
+      { $match: { pg_id: pgId, status: { $ne: 'inactive' } } },
+      { $group: { _id: null, count: { $sum: 1 }, totalRent: { $sum: '$rentAmount' } } }
+    ]);
+
+    const totalTenants = tenantStats.length > 0 ? tenantStats[0].count : 0;
+    const expectedRent = tenantStats.length > 0 ? tenantStats[0].totalRent : 0;
 
     // 2. Get Rent Collected This Month
     const payments = await Payment.aggregate([
@@ -726,9 +800,12 @@ exports.getDashboardStats = async (req, res) => {
       status: { $in: ['open', 'pending'] }
     });
 
-    // 4. Get Occupancy
-    const rooms = await Room.find({ pg_id: pgId });
-    const totalCapacity = rooms.reduce((acc, r) => acc + (r.capacity || 0), 0);
+    // 4. Get Occupancy (DB Aggregation)
+    const roomStats = await Room.aggregate([
+      { $match: { pg_id: pgId } },
+      { $group: { _id: null, totalCapacity: { $sum: '$capacity' } } }
+    ]);
+    const totalCapacity = roomStats.length > 0 ? roomStats[0].totalCapacity : 0;
     const occupancy = totalCapacity > 0 ? Math.round((totalTenants / totalCapacity) * 100) : 0;
 
     res.status(200).json({

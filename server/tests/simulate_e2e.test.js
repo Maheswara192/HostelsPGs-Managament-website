@@ -84,7 +84,7 @@ describe('🚀 Master End-to-End Simulation', () => {
             .set('Authorization', `Bearer ${ownerToken}`)
             .send({
                 roomNumber: "101-E2E",
-                type: "Sharing",
+                type: "Dorm",
                 rent: 5000,
                 capacity: 2
             });
@@ -100,7 +100,7 @@ describe('🚀 Master End-to-End Simulation', () => {
     });
 
     test('Owner Adds Tenant (ACID Transaction Verification)', async () => {
-        // This hits the transaction logic we just built
+        // This verifies the atomic transaction logic
         const res = await request(app).post('/api/owner/tenants')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send({
@@ -129,9 +129,8 @@ describe('🚀 Master End-to-End Simulation', () => {
     });
 
     test('Owner Triggers Backup', async () => {
-        const res = await request(app).post('/api/admin/backups') // wait, only admin? 
-            // Oh, implementation plan said Admin triggers backups. Owner usually doesn't need to.
-            // Let's testing Admin Trigger Backup.
+        // Testing Admin Trigger Backup endpoint
+        const res = await request(app).post('/api/admin/backups')
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(res.status).toBe(200);

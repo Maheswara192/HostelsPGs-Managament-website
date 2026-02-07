@@ -12,7 +12,9 @@ import Login from '../pages/public/Login';
 import Register from '../pages/public/Register';
 import ForgotPassword from '../pages/public/ForgotPassword';
 import ResetPassword from '../pages/public/ResetPassword';
+
 import SetupAccount from '../pages/public/SetupAccount';
+import PublicPGDetails from '../pages/public/PGDetails';
 
 // Admin Pages
 import AdminDashboard from '../pages/admin/PlatformDashboard'; // Will rename later
@@ -28,11 +30,17 @@ import OwnerPayments from '../pages/owner/Payments';
 import OwnerComplaints from '../pages/owner/Complaints';
 import OwnerNotices from '../pages/owner/Notices';
 import OwnerExpenses from '../pages/owner/Expenses';
+import MessManagement from '../pages/owner/MessManagement';
+import VisitorLog from '../pages/owner/VisitorLog';
+import VisitRequests from '../pages/owner/VisitRequests';
+import Housekeeping from '../pages/owner/Housekeeping';
+import Inventory from '../pages/owner/Inventory';
 
 // Tenant Pages
 import TenantDashboard from '../pages/tenant/Dashboard';
 import TenantPayments from '../pages/tenant/Payments';
 import TenantComplaints from '../pages/tenant/Complaints';
+import TenantFood from '../pages/tenant/Food';
 
 import SocketTest from '../components/common/SocketTest';
 
@@ -46,6 +54,7 @@ const AppRoutes = () => {
                     <Route path="/" element={<Home />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/features" element={<Features />} />
+                    <Route path="/pg/:id" element={<PublicPGDetails />} />
                 </Route>
 
                 <Route path="/login" element={<Login />} />
@@ -69,13 +78,19 @@ const AppRoutes = () => {
                         <Route path="/owner/tenants" element={<ProtectedRoute allowedRoles={['owner']}><OwnerTenants /></ProtectedRoute>} />
                         <Route path="/owner/payments" element={<ProtectedRoute allowedRoles={['owner']}><OwnerPayments /></ProtectedRoute>} />
                         <Route path="/owner/complaints" element={<ProtectedRoute allowedRoles={['owner']}><OwnerComplaints /></ProtectedRoute>} />
+                        <Route path="/owner/visitors" element={<ProtectedRoute allowedRoles={['owner']}><VisitorLog /></ProtectedRoute>} />
+                        <Route path="/owner/requests" element={<ProtectedRoute allowedRoles={['owner']}><VisitRequests /></ProtectedRoute>} />
+                        <Route path="/owner/housekeeping" element={<ProtectedRoute allowedRoles={['owner']}><Housekeeping /></ProtectedRoute>} />
+                        <Route path="/owner/inventory" element={<ProtectedRoute allowedRoles={['owner']}><Inventory /></ProtectedRoute>} />
                         <Route path="/owner/notices" element={<ProtectedRoute allowedRoles={['owner']}><OwnerNotices /></ProtectedRoute>} />
                         <Route path="/owner/expenses" element={<ProtectedRoute allowedRoles={['owner']}><OwnerExpenses /></ProtectedRoute>} />
+                        <Route path="/owner/mess" element={<ProtectedRoute allowedRoles={['owner']}><MessManagement /></ProtectedRoute>} />
 
                         {/* Tenant */}
                         <Route path="/tenant" element={<ProtectedRoute allowedRoles={['tenant']}><TenantDashboard /></ProtectedRoute>} />
                         <Route path="/tenant/payments" element={<ProtectedRoute allowedRoles={['tenant']}><TenantPayments /></ProtectedRoute>} />
                         <Route path="/tenant/complaints" element={<ProtectedRoute allowedRoles={['tenant']}><TenantComplaints /></ProtectedRoute>} />
+                        <Route path="/tenant/food" element={<ProtectedRoute allowedRoles={['tenant']}><TenantFood /></ProtectedRoute>} />
 
                     </Route>
                 </Route>

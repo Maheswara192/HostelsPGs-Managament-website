@@ -53,7 +53,7 @@ const Login = () => {
                 className="relative sm:mx-auto sm:w-full sm:max-w-md text-center z-10"
             >
                 <div className="bg-white p-2 rounded-xl inline-block mb-4 shadow-lg">
-                    <img src="/logo.png" alt="StayManager" className="h-12 w-auto" />
+                    <img src="/logo.svg" alt="StayManager" className="h-12 w-auto" />
                 </div>
                 <h2 className="text-3xl font-extrabold text-white tracking-tight">Sign in to your account</h2>
                 <p className="mt-2 text-slate-200">Welcome back! Please enter your details.</p>

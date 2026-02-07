@@ -60,8 +60,12 @@ const Home = () => {
                                 </span>
                             </h1>
 
-                            <p className="text-lg text-slate-400 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
+                            <p className="text-lg text-slate-400 mb-6 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
                                 The smartest way to manage tenants, collect rent, and handle complaints. Upgrade your property management experience today.
+                            </p>
+
+                            <p className="text-xl text-indigo-400 font-medium mb-10 italic">
+                                "Simplifying Hostel Management, One Click at a Time."
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">

@@ -3,6 +3,7 @@ const Room = require('../models/Room');
 const Payment = require('../models/Payment');
 const Complaint = require('../models/Complaint');
 const Notice = require('../models/Notice');
+const HousekeepingLog = require('../models/HousekeepingLog');
 const paymentService = require('../services/payment.service');
 const crypto = require('crypto');
 
@@ -35,6 +36,12 @@ exports.getDashboard = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(5);
 
+        // Get Last Cleaned Status
+        const lastCleaned = await HousekeepingLog.findOne({
+            room_id: tenant.room_id,
+            status: 'Cleaned'
+        }).sort({ date: -1 });
+
         res.json({
             success: true,
             data: {
@@ -42,7 +49,8 @@ exports.getDashboard = async (req, res) => {
                 room: tenant.room_id,
                 pg: tenant.pg_id,
                 recentPayments: payments,
-                recentComplaints: complaints
+                recentComplaints: complaints,
+                lastCleaned: lastCleaned ? lastCleaned.date : null
             }
         });
     } catch (error) {

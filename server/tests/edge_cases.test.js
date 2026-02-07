@@ -2,6 +2,7 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../src/app');
+const bcrypt = require('bcryptjs');
 const User = require('../src/models/User');
 const PG = require('../src/models/PG');
 const Room = require('../src/models/Room');
@@ -96,7 +97,8 @@ describe('⚠️ Edge Case & Resilience Tests', () => {
 
     test('2. Cascade Delete: Delete PG cleans up Rooms', async () => {
         // Mock Admin Token
-        await User.create({ name: "Admin", email: "admin_edge@test.com", password: "password", role: "admin" });
+        const hashedPassword = await bcrypt.hash("password", 10);
+        await User.create({ name: "Admin", email: "admin_edge@test.com", password: hashedPassword, role: "admin" });
         const adminLogin = await request(app).post('/api/auth/login').send({ email: "admin_edge@test.com", password: "password" });
         const adminToken = adminLogin.body.data.token;
 

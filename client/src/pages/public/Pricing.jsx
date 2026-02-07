@@ -17,18 +17,36 @@ const Pricing = () => {
                     <PricingCard
                         title="Starter"
                         price="₹499"
-                        features={['Up to 20 Tenants', 'Basic Rent Tracking', 'Email Support']}
+                        features={[
+                            'Up to 20 Tenants',
+                            'Rent Tracking & Reminders',
+                            'Complaint Management',
+                            'Notice Board',
+                            'Email Support'
+                        ]}
                     />
                     <PricingCard
                         title="Pro"
                         price="₹1,499"
                         popular
-                        features={['Up to 100 Tenants', 'WhatsApp Reminders', 'Expense Management', 'Priority Support']}
+                        features={[
+                            'Up to 100 Tenants',
+                            'Automated WhatsApp Reminders',
+                            'Expense Management',
+                            'Financial Reports (CSV)',
+                            'Priority Support'
+                        ]}
                     />
                     <PricingCard
                         title="Enterprise"
                         price="₹4,999"
-                        features={['Unlimited Tenants', 'Multi-Branch', 'Custom Branding', 'Dedicated Manager']}
+                        features={[
+                            'Unlimited Tenants',
+                            'Multi-Branch Management',
+                            'Custom Branding',
+                            'Dedicated Account Manager',
+                            'API Access'
+                        ]}
                     />
                 </div>
             </div>

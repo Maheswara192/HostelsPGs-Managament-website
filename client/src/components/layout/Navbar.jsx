@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Button from '../common/Button';
+
+import logo from '../../assets/logo.svg';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -13,8 +15,7 @@ const Navbar = () => {
                 <div className="flex justify-between h-16 items-center">
                     {/* Logo */}
                     <Link to="/" className="flex items-center space-x-2">
-                        <Building2 className="h-8 w-8 text-primary" />
-                        <span className="font-bold text-xl text-slate-800">HostelMate</span>
+                        <img src={logo} alt="StayManager" className="h-10" />
                     </Link>
 
                     {/* Desktop Nav */}

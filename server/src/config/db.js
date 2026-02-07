@@ -10,7 +10,7 @@ const connectDB = async () => {
         console.error('❌ Failed to connect to MongoDB:', error.message);
 
         // FALLBACK STRATEGY
-        if (NODE_ENV === 'development') {
+        if (NODE_ENV === 'development' || NODE_ENV === 'test') {
             console.error('❌ CLOUD MONGODB CONNECTION FAILED');
             console.error('👉 ACTION REQUIRED: Check your IP Whitelist in MongoDB Atlas.');
             console.error('   Network Error:', error.message);
@@ -44,7 +44,9 @@ const connectDB = async () => {
                 process.exit(1);
             }
         } else {
-            process.exit(1);
+            console.error('❌ CRITICAL: MongoDB Connection Failed in Production/Test.');
+            // Do not exit, let it retry or stay up (though API will fail) - better for debugging logs
+            // process.exit(1); 
         }
     }
 };

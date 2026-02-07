@@ -21,7 +21,7 @@ const Input = ({ label, error, className = '', type, icon: Icon, ...props }) => 
                 <input
                     id={inputId}
                     type={inputType}
-                    className={`input-field ${error ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : ''} ${isPasswordField ? 'pr-10' : ''} ${Icon ? 'pl-10' : ''}`}
+                    className={`input-field ${error ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : ''} ${isPasswordField ? 'pr-10' : ''} ${Icon ? 'pl-10' : ''} ${props.inputClassName || ''}`}
                     {...props}
                 />
                 {isPasswordField && (

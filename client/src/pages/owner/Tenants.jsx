@@ -117,45 +117,17 @@ const OwnerTenants = () => {
     };
 
     const validateAadhaar = (aadhaar) => {
-        // Aadhaar: 12 digits with Luhn algorithm validation
+        // Aadhaar: 12 digits
         if (!aadhaar) {
             return { valid: false, error: '' };
         }
 
-        if (aadhaar.length < 12) {
-            return { valid: false, error: 'Aadhaar must be 12 digits' };
-        }
-
-        if (aadhaar.length > 12) {
-            return { valid: false, error: 'Aadhaar cannot exceed 12 digits' };
+        if (aadhaar.length !== 12) {
+            return { valid: false, error: 'Aadhaar must be exactly 12 digits' };
         }
 
         if (!/^\d{12}$/.test(aadhaar)) {
             return { valid: false, error: 'Aadhaar must contain only digits' };
-        }
-
-        // Luhn algorithm for checksum validation
-        const luhnCheck = (num) => {
-            let sum = 0;
-            let isEven = false;
-
-            for (let i = num.length - 1; i >= 0; i--) {
-                let digit = parseInt(num[i]);
-
-                if (isEven) {
-                    digit *= 2;
-                    if (digit > 9) digit -= 9;
-                }
-
-                sum += digit;
-                isEven = !isEven;
-            }
-
-            return sum % 10 === 0;
-        };
-
-        if (!luhnCheck(aadhaar)) {
-            return { valid: false, error: 'Invalid Aadhaar number (checksum failed)' };
         }
 
         return { valid: true, error: '' };

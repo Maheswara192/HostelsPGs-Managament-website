@@ -17,16 +17,28 @@ const roomSchema = new mongoose.Schema({
     },
     capacity: {
         type: Number,
-        required: true
+        required: true,
+        min: [1, 'Capacity must be at least 1']
     },
     price: {
         type: Number,
-        required: true
+        required: true,
+        min: [0, 'Rent cannot be negative']
     },
     occupied: {
         type: Number,
         default: 0
     },
+    inventory: [{
+        item: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'InventoryItem'
+        },
+        quantity: {
+            type: Number,
+            default: 1
+        }
+    }],
     // floor: Number,
     createdAt: {
         type: Date,

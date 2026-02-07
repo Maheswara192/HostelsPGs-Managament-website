@@ -18,7 +18,8 @@ const tenantSchema = new mongoose.Schema({
     },
     rentAmount: {
         type: Number,
-        required: true
+        required: true,
+        min: [0, 'Rent amount cannot be negative']
     },
     advanceAmount: {
         type: Number,

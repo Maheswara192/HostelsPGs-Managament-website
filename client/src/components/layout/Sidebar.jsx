@@ -1,7 +1,8 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Building2, Users, FileText, Bell, LogOut, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, FileText, Bell, LogOut, TrendingUp, Utensils, ShieldCheck, Package } from 'lucide-react';
+import logo from '../../assets/logo.svg';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
     const { user, logout } = useAuth();
@@ -22,15 +23,21 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     { to: '/owner/rooms', icon: <Building2 size={20} />, label: 'Rooms' },
                     { to: '/owner/tenants', icon: <Users size={20} />, label: 'Tenants' },
                     { to: '/owner/payments', icon: <TrendingUp size={20} />, label: 'Payments' },
+                    { to: '/owner/housekeeping', icon: <Building2 size={20} />, label: 'Housekeeping' },
+                    { to: '/owner/inventory', icon: <Package size={20} />, label: 'Inventory' },
                     { to: '/owner/complaints', icon: <Bell size={20} />, label: 'Complaints' },
+                    { to: '/owner/visitors', icon: <ShieldCheck size={20} />, label: 'Security Log' },
+                    { to: '/owner/requests', icon: <Users size={20} />, label: 'Visit Requests' },
                     { to: '/owner/notices', icon: <FileText size={20} />, label: 'Notices' },
                     { to: '/owner/expenses', icon: <TrendingUp size={20} />, label: 'Finances' },
+                    { to: '/owner/mess', icon: <Utensils size={20} />, label: 'Mess Menu' },
                 ];
             case 'tenant':
                 return [
                     { to: '/tenant', icon: <LayoutDashboard size={20} />, label: 'My Room', end: true },
                     { to: '/tenant/pay', icon: <FileText size={20} />, label: 'Payments' },
                     { to: '/tenant/complaints', icon: <Bell size={20} />, label: 'My Complaints' },
+                    { to: '/tenant/food', icon: <Utensils size={20} />, label: 'Food & Menu' },
                 ];
             default:
                 return [];
@@ -46,7 +53,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         `}>
             <div className="h-16 flex items-center px-6 border-b border-slate-200 bg-white relative">
                 <div className="flex items-center justify-center w-full">
-                    <img src="/logo.png" alt="StayManager" className="h-8 w-auto object-contain" />
+                    <img src={logo} alt="StayManager" className="h-8 w-auto object-contain" />
                 </div>
                 {/* Mobile Close Button */}
                 <button

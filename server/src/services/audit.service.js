@@ -27,7 +27,6 @@ const logAction = async (req, action, resource, targetId, details = {}) => {
 
     } catch (error) {
         // Non-blocking: Audit logging failure shouldn't crash the main request 
-        // (unless it's a strict compliance system, but for SaaS mvp it's fine)
         console.error("Audit Log Error:", error.message);
     }
 };

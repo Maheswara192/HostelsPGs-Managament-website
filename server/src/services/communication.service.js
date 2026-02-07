@@ -2,6 +2,7 @@ const OnboardingCommunication = require('../models/OnboardingCommunication');
 const emailService = require('./email.service');
 const whatsappService = require('./whatsapp.service');
 const OnboardingAnalytics = require('../models/OnboardingAnalytics');
+const { PLAN_LIMITS } = require('../config/plans');
 
 /**
  * Send Onboarding Communication
@@ -41,35 +42,37 @@ const sendOnboardingCommunication = async (user, pg, token, type = 'WELCOME') =>
             step: 'EMAIL_SENT',
             meta: { type }
         });
-    }
-
-    // 2. Send WhatsApp (if mobile exists)
-    // Assuming user has a mobile/contact field (checking User or Tenant profile?)
-    // User model doesn't have phone, Tenant model does. 
-    // For now we assume User might have phone or we pass it.
-    // Let's assume passed in user object or fetched.
-    // In this streamlined flow, we might need to fetch Tenant profile or add phone to User.
-    // For safety, we skip if no phone.
+    } // End Plan Check
+    // 2. Send WhatsApp (if mobile exists AND Plan Allows)
     if (user.phone) {
-        const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/setup-account?token=${token}`;
-        const waSent = await whatsappService.sendWhatsApp(
-            user.phone,
-            'smsBody', // Reuse SMS body for WA for now
-            {
-                PG_NAME: pg.name,
-                SHORT_LINK: link
-            },
-            user.preferredLanguage
-        );
-        results.whatsapp = waSent;
+        // Check Plan Features
+        const planKey = pg.subscription && pg.subscription.plan ? pg.subscription.plan : 'Free';
+        const planFeatures = PLAN_LIMITS[planKey] ? PLAN_LIMITS[planKey].features : [];
 
-        await OnboardingCommunication.create({
-            user_id: user._id,
-            pg_id: pg._id,
-            channel: 'WHATSAPP',
-            template_key: 'smsBody',
-            delivery_status: waSent ? 'SENT' : 'FAILED'
-        });
+
+        if (!planFeatures.includes('Automated WhatsApp Reminders')) {
+            console.log(`[PLAN LIMIT] WhatsApp skipped for ${user.email}. Plan: ${planKey}`);
+        } else {
+            const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/setup-account?token=${token}`;
+            const waSent = await whatsappService.sendWhatsApp(
+                user.phone,
+                'smsBody', // Reuse SMS body for WA for now
+                {
+                    PG_NAME: pg.name,
+                    SHORT_LINK: link
+                },
+                user.preferredLanguage
+            );
+            results.whatsapp = waSent;
+
+            await OnboardingCommunication.create({
+                user_id: user._id,
+                pg_id: pg._id,
+                channel: 'WHATSAPP',
+                template_key: 'smsBody',
+                delivery_status: waSent ? 'SENT' : 'FAILED'
+            });
+        }
     }
 
     return results;

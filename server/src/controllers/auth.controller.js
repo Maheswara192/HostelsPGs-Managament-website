@@ -7,9 +7,17 @@ const bcrypt = require('bcryptjs');
 const OnboardingAnalytics = require('../models/OnboardingAnalytics');
 const tokenService = require('../services/token.service');
 
-// @desc    Register a new user (Owner or Tenant)
-// @route   POST /api/auth/register
-// @access  Public
+/**
+ * @desc    Register a new user
+ * @route   POST /api/auth/register
+ * @access  Public
+ * @description
+ * Registration entry point.
+ * - Prevents identifying as 'admin' directly.
+ * - Hashes password using bcrypt.
+ * - If role is 'owner', automatically creates a linked PG record.
+ * - Returns JWT token for immediate login.
+ */
 exports.register = async (req, res) => {
     try {
         const { name, email, password, role, pgName } = req.body;
@@ -63,13 +71,22 @@ exports.register = async (req, res) => {
             },
         });
     } catch (error) {
+        console.error('❌ Register Error:', error);
         res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
 
-// @desc    Auth user & get token
-// @route   POST /api/auth/login
-// @access  Public
+/**
+ * @desc    Authenticate user & get token
+ * @route   POST /api/auth/login
+ * @access  Public
+ * @description
+ * Loign flow with security checks:
+ * 1. Verifies credentials.
+ * 2. Checks `accountStatus` (rejects PENDING/SUSPENDED).
+ * 3. Logs login action to Audit trail.
+ * 4. Returns JWT and user profile.
+ */
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -110,7 +127,8 @@ exports.login = async (req, res) => {
             res.status(401).json({ success: false, message: 'Invalid email or password' });
         }
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server Error' });
+        console.error('❌ Login Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
 
@@ -211,9 +229,14 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
     try {
         const { email, otp, password } = req.body;
+
+        // Normalize inputs
+        const normalizedEmail = email ? email.toLowerCase().trim() : '';
+        const normalizedOtp = otp ? otp.toString().trim() : '';
+
         const user = await User.findOne({
-            email,
-            resetPasswordOtp: otp,
+            email: normalizedEmail,
+            resetPasswordOtp: normalizedOtp,
             resetPasswordExpires: { $gt: Date.now() }
         });
 
@@ -236,9 +259,17 @@ exports.resetPassword = async (req, res) => {
     }
 };
 
-// @desc    Setup Account (Magic Link)
-// @route   POST /api/auth/setup-account
-// @access  Public
+/**
+ * @desc    Setup Account (Magic Link Activation)
+ * @route   POST /api/auth/setup-account
+ * @access  Public (Token Based)
+ * @description
+ * Finalizes user account creation for invited tenants/owners.
+ * - Validates time-sensitive activation token.
+ * - Sets user password.
+ * - Activates account status.
+ * - Logs 'ACTIVATED' event to onboarding analytics.
+ */
 exports.setupAccount = async (req, res) => {
     try {
         const { token, password } = req.body;

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Lock, CheckCircle, AlertCircle, Mail, Key } from 'lucide-react';
 import axios from 'axios';
+import Input from '../../components/common/Input';
 
 const ResetPassword = () => {
     const location = useLocation();
@@ -93,54 +94,47 @@ const ResetPassword = () => {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                placeholder="Confirm email"
-                            />
-                        </div>
+                        <Input
+                            label="Email Address"
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            icon={Mail}
+                            placeholder="Confirm email"
+                        />
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">OTP Code</label>
-                            <input
-                                type="text"
-                                required
-                                maxLength="6"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none tracking-widest font-mono text-center text-lg"
-                                placeholder="XXXXXX"
-                            />
-                        </div>
+                        <Input
+                            label="OTP Code"
+                            type="text"
+                            required
+                            maxLength="6"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            icon={Key}
+                            inputClassName="tracking-widest font-mono text-center text-lg"
+                            placeholder="XXXXXX"
+                        />
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                            <input
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                placeholder="Minimum 6 characters"
-                            />
-                        </div>
+                        <Input
+                            label="New Password"
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            icon={Lock}
+                            placeholder="Minimum 6 characters"
+                        />
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                            <input
-                                type="password"
-                                required
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                placeholder="Re-enter password"
-                            />
-                        </div>
+                        <Input
+                            label="Confirm Password"
+                            type="password"
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            icon={Lock}
+                            placeholder="Re-enter password"
+                        />
 
                         <button
                             type="submit"
