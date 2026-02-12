@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Lock, CheckCircle, AlertCircle, Mail, Key } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import Input from '../../components/common/Input';
 
 const ResetPassword = () => {
@@ -34,7 +34,7 @@ const ResetPassword = () => {
         setLoading(true);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/auth/reset-password', {
+            const res = await api.post('/auth/reset-password', {
                 email,
                 otp,
                 password

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
@@ -17,7 +17,7 @@ const ForgotPassword = () => {
         setError('');
 
         try {
-            await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+            await api.post('/auth/forgot-password', { email });
             setMessage('OTP sent! Please check your email.');
             // After 1 seconds, redirect to verify
             setTimeout(() => {

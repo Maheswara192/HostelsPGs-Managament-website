@@ -64,7 +64,9 @@ const Footer = () => {
                 </div>
 
                 <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center bg-slate-900">
-                    <p className="text-slate-500 text-sm">© 2026 StayManager. All rights reserved.</p>
+                    <p className="text-slate-500 text-sm">
+                        © 2026 <a href="https://staymanager.cloud" className="text-primary-light hover:text-white transition-colors">staymanager.cloud</a>. All rights reserved.
+                    </p>
                     <div className="flex space-x-6 mt-4 md:mt-0 text-sm">
                         <a href="#" className="text-slate-500 hover:text-white transition-colors">Privacy Policy</a>
                         <a href="#" className="text-slate-500 hover:text-white transition-colors">Terms of Service</a>
