@@ -45,7 +45,9 @@
     "socket.io": "^4.8.3",
     "source-map-js": "^1.2.1",
     "update-browserslist-db": "^1.2.3",
-    "xss-clean": "^0.1.4"
+    "winston": "^3.19.0",
+    "xss-clean": "^0.1.4",
+    "zod": "^4.3.6"
   },
   "scripts": {
     "start": "node server.js",

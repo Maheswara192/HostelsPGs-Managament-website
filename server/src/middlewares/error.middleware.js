@@ -1,4 +1,5 @@
 const { NODE_ENV } = require('../config/env');
+const logger = require('../utils/logger');
 
 /**
  * API Error Class
@@ -24,9 +25,8 @@ const errorHandler = (err, req, res, next) => {
     error.message = err.message;
     error.statusCode = err.statusCode || 500;
 
-    // Log to console for dev
-    console.error('💥 ERROR:', err.name, err.message);
-    if (err.stack) console.error(err.stack);
+    // Log using Winston
+    logger.error(`💥 ERROR [${err.name}]: ${err.message}`, { stack: err.stack, path: req.path, method: req.method });
 
     // Mongoose Bad ObjectId
     if (err.name === 'CastError') {

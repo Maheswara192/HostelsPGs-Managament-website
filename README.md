@@ -4,19 +4,25 @@ A comprehensive, production-ready SaaS platform built to digitalize and streamli
 
 ---
 
-## 🔥 Features
-- **Multi-tenant architecture**: Single codebase serving multiple independent PGs with complete data isolation.
-- **Role-Based Access Control (RBAC)**: Distinct layouts, views, and operational capabilities for `SuperAdmin`, `Property Manager`, and `Tenant`.
-- **Real-time updates (Socket.io)**: Instant notifications for announcements, complaints resolution, and chat support.
-- **Payment integration (Razorpay)**: Secure online rent collection, automated invoice generation, and pending payment reminders.
-- **Inventory & Room Management**: Real-time bed availability tracking and allocation.
-- **Automated Workflows**: Automated monthly rent generation and overdue flagging.
+## 🔥 Engineering Features
+- **Tenancy Data Isolation**: Implemented B2B multi-tenancy utilizing logical isolation (Pool Model). Data is segregated at the document level via indexed `pg_id` routing, enforced by centralized zero-trust middleware.
+- **Role-Based Access Control (RBAC)**: Deep permission-level authorization utilizing distinct roles within `auth.middleware.js`, limiting endpoint and record access according to JWT claims.
+- **Resilient Payment Flow (Razorpay)**: Secure backend-driven `/api/payments/order` creation followed by cryptographic SHA256 HMAC signature verification on the server-side to prevent frontend price-tampering.
+- **Robust Error Handling & Validation**: Centralized `ApiError` class processing all uncaught promise errors into structured, predictable JSON. Incoming payloads are scrubbed and validated via `zod` schemas.
+- **Real-time Engine (Socket.io)**: Websocket-based instant notifications backed by Redis Pub/Sub adapters to allow horizontal node scaling without local state loss.
+- **Rate Limiting & Security**: Implemented `express-rate-limit` (100 req/10min), `helmet`, and `express-mongo-sanitize` to defend against brute force, XSS, and NoSQL injection.
 
 ---
 
 ## 🧠 System Design
 
 Our architecture strictly follows a separation of concerns, keeping the client stateless while relying on a robust, load-balanced Node.js API with a NoSQL database.
+
+### Strict Data Isolation (Multi-Tenancy)
+Multi-tenancy is handled via the **Pool Model** (Logical Isolation). All tenants exist in a singular database, but absolute isolation is guaranteed by `isolation.middleware.js`:
+- **Forced Identity:** Incoming JSON body payloads or query parameters with a `pg_id` are completely ignored/stripped.
+- **JWT Trust Validation:** The application mutates the request lifecycle to forcefully append the authenticated user's `pg_id` (extracted from the secure JWT) directly to the operation scope, completely eliminating parameter tampering attacks.
+- **Database Optimization:** All multi-tenant collections (Rooms, Visitors, Payments, Tenants) feature compound indexing on `{ pg_id: 1, ... }` to ensure instantaneous cross-tenant routing without full collection scans.
 
 ### Core Architecture
 ```mermaid
