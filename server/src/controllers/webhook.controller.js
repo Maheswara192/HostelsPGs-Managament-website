@@ -42,10 +42,11 @@ exports.handleWebhook = async (req, res) => {
     }
 };
 
-// Logic to Reconcile / Self-Heal
+// Logic to Reconcile / Self-Heal with ACID Transactions
 const handlePaymentCaptured = async (paymentEntity) => {
     const orderId = paymentEntity.order_id;
     const paymentId = paymentEntity.id;
+    const mongoose = require('mongoose');
 
     const payment = await Payment.findOne({ gateway_order_id: orderId });
 
@@ -60,42 +61,50 @@ const handlePaymentCaptured = async (paymentEntity) => {
         return;
     }
 
-    // Self-Healing
     console.warn(`[AUDIT] WEBHOOK RECOVERY: Activating Subscription for ${orderId}`);
 
-    payment.status = 'SUCCESS';
-    payment.gateway_payment_id = paymentId;
-    // Activate Subscription Logic (Copy of Controller Logic)
-    // In a real app, this logic should be in a shared service function
-    // For now, we update the status so the verification endpoint returns "Already Processed"
-    // and we assume the User will hit the Verify endpoint or we do it here.
+    // Start ACID Transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // To be strictly correct, we should duplicate the activation logic here:
-    if (payment.type === 'SUBSCRIPTION') {
-        const planType = payment.metadata?.planType;
-        if (planType) {
-            const pg = await PG.findById(payment.pg_id);
-            if (pg) {
-                const now = new Date();
-                let newExpiry = new Date();
+    try {
+        payment.status = 'SUCCESS';
+        payment.gateway_payment_id = paymentId;
 
-                if (pg.subscription.status === 'active' && pg.subscription.expiryDate > now) {
-                    newExpiry = new Date(pg.subscription.expiryDate);
-                    newExpiry.setDate(newExpiry.getDate() + 30);
-                } else {
-                    newExpiry.setDate(now.getDate() + 30);
-                    pg.subscription.startDate = now;
+        if (payment.type === 'SUBSCRIPTION') {
+            const planType = payment.metadata?.planType;
+            if (planType) {
+                const pg = await PG.findById(payment.pg_id).session(session);
+                if (pg) {
+                    const now = new Date();
+                    let newExpiry = new Date();
+
+                    if (pg.subscription.status === 'active' && pg.subscription.expiryDate > now) {
+                        newExpiry = new Date(pg.subscription.expiryDate);
+                        newExpiry.setDate(newExpiry.getDate() + 30);
+                    } else {
+                        newExpiry.setDate(now.getDate() + 30);
+                        pg.subscription.startDate = now;
+                    }
+
+                    pg.subscription.plan = planType;
+                    pg.subscription.status = 'active';
+                    pg.subscription.expiryDate = newExpiry;
+
+                    await pg.save({ session });
+                    payment.subscription_processed = true;
                 }
-
-                pg.subscription.plan = planType;
-                pg.subscription.status = 'active';
-                pg.subscription.expiryDate = newExpiry;
-
-                await pg.save();
-                payment.subscription_processed = true;
             }
         }
+        
+        await payment.save({ session });
+        await session.commitTransaction();
+        console.info(`[AUDIT] WEBHOOK RECOVERY COMPLETE: ${orderId}`);
+    } catch (error) {
+        await session.abortTransaction();
+        console.error(`[AUDIT] WEBHOOK TRANSACTION FAILED: ${orderId}`, error);
+        throw error;
+    } finally {
+        session.endSession();
     }
-    await payment.save();
-    console.info(`[AUDIT] WEBHOOK RECOVERY COMPLETE: ${orderId}`);
 };

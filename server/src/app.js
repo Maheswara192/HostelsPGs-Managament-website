@@ -21,7 +21,9 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 const app = express();
+const trackingMiddleware = require('./middlewares/tracking.middleware');
 
+app.use(trackingMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Handle URL-encoded data
 
@@ -123,6 +125,7 @@ app.use('/api/housekeeping', require('./routes/housekeeping.routes'));
 app.use('/api/inventory', require('./routes/inventory.routes'));
 app.use('/api/public', require('./routes/public.routes'));
 app.use('/api/visits', require('./routes/visit.routes'));
+app.use('/api/complaints', require('./routes/complaints.routes'));
 app.use('/api/tenant', tenantRoutes);
 
 // Error Handler

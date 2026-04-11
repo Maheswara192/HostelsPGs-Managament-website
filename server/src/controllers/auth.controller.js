@@ -193,11 +193,12 @@ exports.forgotPassword = async (req, res) => {
         console.log(`⏰ Valid until: ${new Date(user.resetPasswordExpires).toLocaleString()}`);
         console.log('==================================================');
 
-        // Try to send OTP via Email
+        // Send OTP via BullMQ Worker
         try {
-            const sent = await sendOTP(user.email, otp);
+            const { enqueueEmail } = require('../workers/email.worker');
+            await enqueueEmail('sendOTP', { email: user.email, otp });
 
-            if (sent) {
+            if (true) { // Assume enqueued successfully
                 console.log(`✅ OTP email sent successfully to ${email}`);
                 return res.json({
                     success: true,

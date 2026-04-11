@@ -114,47 +114,56 @@ exports.verifyPayment = async (req, res) => {
             await payment.save();
         }
 
-        // 3. Fulfill Business Logic
-        if (payment.type === 'RENT' && payment.tenant_id) {
-            // ... (Tenant Logic - Kept for context)
-            const tenant = await Tenant.findById(payment.tenant_id);
-            // Optionally update tenant status or last payment date
-        } else if (payment.type === 'SUBSCRIPTION') {
-            const planType = payment.metadata?.planType;
-            if (planType) {
-                const pg = await PG.findById(payment.pg_id);
-                if (pg) {
-                    // Logic: If already active, extend. If expired/inactive, reset.
-                    const now = new Date();
-                    let newExpiry = new Date(); // Start from Now
+        // 3. Fulfill Business Logic using ACID Transactions
+        const mongoose = require('mongoose');
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-                    // Check if current plan is active and not expired
-                    if (pg.subscription.status === 'active' && pg.subscription.expiryDate && new Date(pg.subscription.expiryDate) > now) {
-                        // Extend existing expiry
-                        newExpiry = new Date(pg.subscription.expiryDate);
-                        newExpiry.setDate(newExpiry.getDate() + 30);
-                    } else {
-                        // New / Restart: Set expiry to Now + 30 days
-                        newExpiry.setDate(now.getDate() + 30);
-                        pg.subscription.startDate = now;
+        try {
+            if (payment.type === 'RENT' && payment.tenant_id) {
+                // ... (Tenant Logic)
+                // Optionally update tenant status or last payment date
+                // const tenant = await Tenant.findById(payment.tenant_id).session(session);
+            } else if (payment.type === 'SUBSCRIPTION') {
+                const planType = payment.metadata?.planType;
+                if (planType) {
+                    const pg = await PG.findById(payment.pg_id).session(session);
+                    if (pg) {
+                        const now = new Date();
+                        let newExpiry = new Date();
+
+                        if (pg.subscription.status === 'active' && pg.subscription.expiryDate && new Date(pg.subscription.expiryDate) > now) {
+                            newExpiry = new Date(pg.subscription.expiryDate);
+                            newExpiry.setDate(newExpiry.getDate() + 30);
+                        } else {
+                            newExpiry.setDate(now.getDate() + 30);
+                            pg.subscription.startDate = now;
+                        }
+
+                        pg.subscription.plan = planType;
+                        pg.subscription.status = 'active';
+                        pg.subscription.expiryDate = newExpiry;
+
+                        await pg.save({ session });
+
+                        // Mark as Fully Processed
+                        payment.subscription_processed = true;
+                        
+                        console.log(`[SUBSCRIPTION] Activated for PG ${pg._id} | Plan: ${planType} | Expires: ${newExpiry}`);
                     }
-
-                    pg.subscription.plan = planType;
-                    pg.subscription.status = 'active';
-                    pg.subscription.expiryDate = newExpiry;
-
-                    await pg.save();
-
-                    // Mark as Fully Processed
-                    payment.subscription_processed = true;
-                    await payment.save();
-
-                    console.log(`[SUBSCRIPTION] Activated for PG ${pg._id} | Plan: ${planType} | Expires: ${newExpiry}`);
                 }
             }
-        }
 
-        res.status(200).json({ success: true, message: 'Payment Verified' });
+            await payment.save({ session });
+            await session.commitTransaction();
+            
+            res.status(200).json({ success: true, message: 'Payment Verified' });
+        } catch (txnError) {
+            await session.abortTransaction();
+            throw txnError;
+        } finally {
+            session.endSession();
+        }
 
     } catch (error) {
         console.error('[AUDIT] SYSTEM ERROR: Verify Payment Failed:', error);

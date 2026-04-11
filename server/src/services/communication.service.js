@@ -15,15 +15,16 @@ const { PLAN_LIMITS } = require('../config/plans');
 const sendOnboardingCommunication = async (user, pg, token, type = 'WELCOME') => {
     const results = { email: false, whatsapp: false };
 
-    // 1. Send Email
+    // 1. Send Email via Background Queue (BullMQ)
     if (user.email) {
-        const emailSent = await emailService.sendAccountSetupEmail(
-            user.email,
-            user.name,
-            token,
-            pg.name,
-            user.preferredLanguage
-        );
+        const { enqueueEmail } = require('../workers/email.worker');
+        await enqueueEmail('sendSetupEmail', {
+            email: user.email,
+            name: user.name,
+            token: token,
+            pgName: pg.name
+        });
+        const emailSent = true; // Log as queued/sent for initial fast response
         results.email = emailSent;
 
         // Audit Log

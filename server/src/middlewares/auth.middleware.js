@@ -13,11 +13,24 @@ const protect = async (req, res, next) => {
             token = req.headers.authorization.split(' ')[1];
 
             const decoded = jwt.verify(token, JWT_SECRET);
+            const cacheKey = `session:${decoded.id}`;
 
-            req.user = await User.findById(decoded.id).select('-password');
+            // Try Redis first
+            const redis = require('../config/redis');
+            let cachedUser = await redis.get(cacheKey);
 
-            if (!req.user) {
-                return res.status(401).json({ success: false, message: 'Not authorized, user not found' });
+            if (cachedUser) {
+                req.user = cachedUser;
+            } else {
+                // Fallback to DB
+                req.user = await User.findById(decoded.id).select('-password').lean(); // Use lean() for faster plain-object conversion
+                
+                if (!req.user) {
+                    return res.status(401).json({ success: false, message: 'Not authorized, user not found' });
+                }
+                
+                // Save to cache for 1 hour (3600 seconds)
+                await redis.setEx(cacheKey, 3600, req.user);
             }
 
             next();
