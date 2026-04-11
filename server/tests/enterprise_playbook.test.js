@@ -156,6 +156,7 @@ describe('Enterprise Playbook Certification', () => {
 
 async function getOwnerIdFromToken(token) {
     const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const { JWT_SECRET } = require('../src/config/env');
+    const decoded = jwt.verify(token, JWT_SECRET);
     return decoded.id;
 }

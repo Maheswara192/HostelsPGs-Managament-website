@@ -14,10 +14,14 @@ const validate = (schema) => (req, res, next) => {
         });
         next();
     } catch (err) {
-        logger.warn(`[VALIDATION FAILED] ${req.method} ${req.originalUrl}`, { errors: err.errors });
-        // Extract validation errors
-        const errorMessages = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
-        return next(new ApiError(400, `Validation Error: ${errorMessages}`));
+        if (err.errors || err.issues) {
+            const errors = err.errors || err.issues;
+            logger.warn(`[VALIDATION FAILED] ${req.method} ${req.originalUrl}`, { errors });
+            const errorMessages = errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+            return next(new ApiError(400, `Validation Error: ${errorMessages}`));
+        }
+        logger.error(`[VALIDATION MIDDLEWARE SYSTEM ERROR]`, err);
+        return next(err);
     }
 };
 

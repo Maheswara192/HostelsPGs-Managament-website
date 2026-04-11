@@ -3,17 +3,14 @@ const app = require('../src/app');
 const dbHandler = require('./utils/db-handler');
 const User = require('../src/models/User');
 const PG = require('../src/models/PG');
-const { generateToken } = require('../src/utils/generateToken'); // Mock or import if available
-// Actually, utils might not export it directly or test setup bypasses it.
-// We can use jwt directly.
-const jwt = require('jsonwebtoken');
+const generateToken = require('../src/utils/generateToken');
 
 beforeAll(async () => await dbHandler.connect());
 afterEach(async () => await dbHandler.clearDatabase());
 afterAll(async () => await dbHandler.closeDatabase());
 
 const createToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    return generateToken(id);
 };
 
 describe('Security & Isolation Certification', () => {

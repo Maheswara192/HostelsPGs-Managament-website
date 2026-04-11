@@ -46,8 +46,8 @@ exports.createOrder = async (req, res) => {
 
         // 3. Create Payment Record (Created)
         const payment = await Payment.create({
-            pg_id: req.user.pg_id || req.user._id,
-            user_id: req.user._id,
+            pg_id: req.user.pg_id ? req.user.pg_id : (req.user._id || req.user.id),
+            user_id: req.user._id || req.user.id,
             tenant_id: tenantId,
             amount: amountInPaise / 100,
             currency: currency,

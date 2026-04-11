@@ -5,7 +5,7 @@ const registerSchema = z.object({
     name: z.string({ required_error: 'Name is required' }).min(2, 'Name must be at least 2 characters'),
     email: z.string({ required_error: 'Email is required' }).email('Invalid email format'),
     password: z.string({ required_error: 'Password is required' }).min(6, 'Password must be at least 6 characters'),
-    role: z.enum(['owner', 'tenant'], { required_error: 'Role is required (owner or tenant)' })
+    role: z.enum(['owner', 'tenant', 'admin'], { required_error: 'Role is required (owner, tenant, or admin)' })
   })
 });
 
@@ -19,9 +19,9 @@ const loginSchema = z.object({
 const createPaymentOrderSchema = z.object({
   body: z.object({
     type: z.enum(['SUBSCRIPTION', 'RENT'], { required_error: 'Payment type is required' }),
-    planType: z.string().optional(),
-    tenantId: z.string().optional(),
-    amount: z.number().positive('Amount must be positive').optional()
+    planType: z.string().optional().nullable(),
+    tenantId: z.string().optional().nullable(),
+    amount: z.number().positive('Amount must be positive').optional().nullable()
   })
 });
 
