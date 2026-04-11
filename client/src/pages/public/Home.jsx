@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, CreditCard, Shield, Zap, TrendingUp, Smartphone, Building2, LayoutDashboard, Home as HomeIcon } from 'lucide-react';
+import { Users, CreditCard, Shield, Zap, TrendingUp, Smartphone, Building2, LayoutDashboard, Home as HomeIcon, CheckCircle2 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import { motion } from 'framer-motion';
 
@@ -12,29 +12,24 @@ const Home = () => {
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.2
+                staggerChildren: 0.15
             }
         }
     };
 
-    const itemVariants = {
-        hidden: { opacity: 0, y: 30 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.6, ease: "easeOut" }
-        }
-    };
-
     return (
-        <div className="overflow-hidden font-sans">
+        <div className="overflow-hidden font-sans bg-surface">
             {/* Hero Section */}
-            <section className="bg-slate-900 text-white min-h-[95vh] flex flex-col justify-center relative overflow-hidden">
-                {/* Background Blobs */}
+            <section className="bg-[#0b0c10] text-white min-h-[95vh] flex flex-col justify-center relative overflow-hidden">
+                {/* Animated Background Blobs */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen" />
-                    <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] mix-blend-screen" />
+                    <div className="absolute top-[-15%] right-[-5%] w-[600px] h-[600px] bg-primary-600/30 rounded-full blur-[140px] mix-blend-screen animate-float" />
+                    <div className="absolute bottom-[-15%] left-[-10%] w-[700px] h-[700px] bg-fuchsia-600/20 rounded-full blur-[150px] mix-blend-screen animate-float" style={{ animationDelay: '2s' }} />
+                    <div className="absolute top-[40%] left-[30%] w-[400px] h-[400px] bg-blue-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow" />
                 </div>
+
+                {/* Grid Overlay */}
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50"></div>
 
                 <div className="max-w-7xl mx-auto px-4 w-full pt-20 pb-16 relative z-10">
                     <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
@@ -43,59 +38,52 @@ const Home = () => {
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
-                            className="lg:w-[45%] text-center lg:text-left"
+                            className="lg:w-[50%] text-center lg:text-left"
                         >
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 backdrop-blur-sm text-indigo-400 text-xs font-bold tracking-wider uppercase mb-8 shadow-sm">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-primary-300 text-sm font-semibold tracking-wide uppercase mb-8 shadow-glow">
                                 <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
                                 </span>
-                                v1.0 Now Live
+                                HostelsPGs Manager v2.0
                             </div>
 
-                            <h1 className="text-5xl lg:text-7xl font-extrabold mb-6 leading-[1.1] tracking-tight drop-shadow-2xl">
-                                <span className="text-white">Manage Hostels</span> <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-sky-300 to-cyan-300 animate-gradient-x brightness-110">
-                                    Without Chaos.
+                            <h1 className="text-5xl lg:text-7xl font-extrabold mb-6 leading-[1.1] tracking-tight drop-shadow-2xl font-heading">
+                                <span className="text-white">Manage Properties</span> <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 via-fuchsia-400 to-primary-300 animate-gradient-x brightness-125">
+                                    Like a Pro.
                                 </span>
                             </h1>
 
-                            <p className="text-lg text-slate-400 mb-6 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
-                                The smartest way to manage tenants, collect rent, and handle complaints. Upgrade your property management experience today.
-                            </p>
-
-                            <p className="text-xl text-indigo-400 font-medium mb-10 italic">
-                                "Simplifying Hostel Management, One Click at a Time."
+                            <p className="text-lg text-slate-300 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
+                                The ultimate operating system for PG owners. Automate rent collections, handle complaints dynamically, and scale your property portfolio with ease.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                    <Button
-                                        size="lg"
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 text-lg shadow-lg shadow-indigo-500/30 transition-all"
-                                        onClick={() => navigate('/register')}
-                                    >
-                                        Start Free Trial
-                                    </Button>
-                                </motion.div>
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                    <Button
-                                        variant="outline"
-                                        size="lg"
-                                        className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-4 text-lg backdrop-blur-md"
-                                        onClick={() => navigate('/features')}
-                                    >
-                                        See How It Works
-                                    </Button>
-                                </motion.div>
+                                <Button
+                                    size="lg"
+                                    className="px-8 py-4 text-lg"
+                                    onClick={() => navigate('/register')}
+                                >
+                                    Start Free Trial
+                                    <Zap className="w-5 h-5 ml-2 text-white/80" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="lg"
+                                    className="border border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg backdrop-blur-md"
+                                    onClick={() => navigate('/features')}
+                                >
+                                    See How It Works
+                                </Button>
                             </div>
 
-                            <div className="mt-12 pt-8 border-t border-slate-800/50 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6 text-sm text-slate-500 font-medium">
+                            <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6 text-sm text-slate-400 font-medium">
                                 <span>Trusted by modern owners:</span>
-                                <div className="flex gap-6 opacity-60 grayscale transition-all hover:grayscale-0 hover:opacity-100">
-                                    <div className="flex items-center gap-2"><Building2 size={18} /> <span>UrbanStay</span></div>
-                                    <div className="flex items-center gap-2"><HomeIcon size={18} /> <span>CoLive</span></div>
-                                    <div className="flex items-center gap-2"><LayoutDashboard size={18} /> <span>PgPro</span></div>
+                                <div className="flex gap-6 opacity-60 grayscale transition-all duration-500 hover:grayscale-0 hover:opacity-100">
+                                    <div className="flex items-center gap-2"><Building2 size={18} className="text-primary-400" /> <span className="text-slate-200">UrbanStay</span></div>
+                                    <div className="flex items-center gap-2"><HomeIcon size={18} className="text-accent" /> <span className="text-slate-200">CoLive</span></div>
+                                    <div className="flex items-center gap-2"><LayoutDashboard size={18} className="text-blue-400" /> <span className="text-slate-200">PgPro</span></div>
                                 </div>
                             </div>
                         </motion.div>
@@ -105,67 +93,82 @@ const Home = () => {
                             initial={{ opacity: 0, scale: 0.9, rotateY: -15, rotateX: 5 }}
                             animate={{ opacity: 1, scale: 1, rotateY: -12, rotateX: 5 }}
                             transition={{ duration: 1, delay: 0.2 }}
-                            className="lg:w-[55%] hidden lg:block perspective-1000 group"
-                            style={{ perspective: '1000px' }}
+                            className="lg:w-[50%] hidden lg:block perspective-1000 group relative z-20"
+                            style={{ perspective: '1200px' }}
                         >
-                            <div className="relative w-full aspect-[16/10] bg-slate-900 rounded-xl border border-slate-700 shadow-2xl overflow-hidden transform transition-all duration-700 ease-out group-hover:rotate-y-0 group-hover:rotate-x-0 group-hover:scale-[1.02] shadow-black/50" style={{ transformStyle: 'preserve-3d', transform: 'rotateY(-12deg) rotateX(5deg)' }}>
+                            <div className="absolute inset-x-10 -bottom-10 h-20 bg-primary-500/20 blur-[80px]"></div>
+                            
+                            <div className="relative w-full aspect-[16/10] bg-[#0f111a] rounded-2xl border border-white/10 overflow-hidden transform transition-all duration-700 ease-out group-hover:rotate-y-0 group-hover:rotate-x-0 group-hover:scale-[1.02] group-hover:shadow-[0_0_50px_-12px_rgba(139,92,246,0.5)] shadow-2xl shadow-black" style={{ transformStyle: 'preserve-3d', transform: 'rotateY(-12deg) rotateX(5deg)' }}>
                                 {/* Browser Bar */}
-                                <div className="h-8 bg-slate-800 border-b border-slate-700 flex items-center px-4 gap-2">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                                    <div className="ml-4 px-3 py-0.5 bg-slate-900/50 rounded text-[10px] text-slate-500 font-mono w-48 text-center border border-slate-700/50">
-                                        app.staymanager.com/dashboard
+                                <div className="h-10 bg-[#161925] border-b border-white/5 flex items-center px-4 gap-2">
+                                    <div className="flex gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-red-400/80 shadow-[0_0_10px_rgba(248,113,113,0.5)]" />
+                                        <div className="w-3 h-3 rounded-full bg-amber-400/80 shadow-[0_0_10px_rgba(251,191,36,0.5)]" />
+                                        <div className="w-3 h-3 rounded-full bg-emerald-400/80 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+                                    </div>
+                                    <div className="ml-6 px-4 py-1 bg-black/40 rounded-md text-[11px] text-slate-400 font-mono w-64 text-center border border-white/5 mx-auto">
+                                        app.staymanager.com/overview
                                     </div>
                                 </div>
 
                                 {/* App Interface */}
                                 <div className="flex h-full">
                                     {/* Sidebar */}
-                                    <div className="w-16 bg-slate-800/50 border-r border-slate-700/50 flex flex-col items-center py-4 gap-6">
-                                        <div className="w-8 h-8 bg-indigo-500 rounded-lg shadow-lg shadow-indigo-500/20" />
-                                        <div className="w-6 h-6 rounded bg-slate-700/50" />
-                                        <div className="w-6 h-6 rounded bg-slate-700/50" />
-                                        <div className="w-6 h-6 rounded bg-slate-700/50" />
-                                        <div className="mt-auto w-6 h-6 rounded-full bg-slate-600" />
+                                    <div className="w-20 bg-[#161925] border-r border-white/5 flex flex-col items-center py-6 gap-6 relative">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent rounded-xl shadow-lg flex items-center justify-center text-white font-bold">SM</div>
+                                        <div className="w-8 h-8 rounded-lg bg-primary-500/20 border border-primary-500/50 shadow-glow" />
+                                        <div className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 transition-colors" />
+                                        <div className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 transition-colors" />
+                                        <div className="mt-auto w-10 h-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border-2 border-slate-800" />
                                     </div>
 
                                     {/* Main Content */}
-                                    <div className="flex-1 bg-slate-900 p-6">
-                                        <div className="flex justify-between items-center mb-8">
+                                    <div className="flex-1 bg-gradient-to-br from-[#0f111a] to-[#161925] p-8 relative overflow-hidden">
+                                        {/* Mock Background glow inside dashboard */}
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 blur-[60px] rounded-full pointer-events-none"></div>
+
+                                        <div className="flex justify-between items-center mb-10 relative z-10">
                                             <div>
-                                                <div className="h-4 w-32 bg-slate-700 rounded mb-2" />
-                                                <div className="h-2 w-48 bg-slate-800 rounded" />
+                                                <h3 className="text-xl font-bold text-white mb-1">PG Overview</h3>
+                                                <p className="text-xs text-slate-400 mb-0">Welcome back, Admin</p>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700" />
-                                                <div className="h-8 w-24 rounded-lg bg-indigo-600 shadow-lg shadow-indigo-600/20" />
+                                            <div className="h-9 px-4 rounded-lg bg-gradient-to-r from-primary-600 to-primary-500 shadow-glow flex items-center justify-center text-xs font-semibold text-white cursor-pointer hover:scale-105 transition-transform">
+                                                + Add Tenant
                                             </div>
                                         </div>
 
                                         {/* Mock Stats */}
-                                        <div className="grid grid-cols-3 gap-4 mb-8">
-                                            {[1, 2, 3].map(i => (
-                                                <div key={i} className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                                                    <div className="h-8 w-8 rounded bg-slate-700/30 mb-3" />
-                                                    <div className="h-5 w-16 bg-slate-700/50 rounded mb-1" />
-                                                    <div className="h-3 w-10 bg-slate-800 rounded" />
+                                        <div className="grid grid-cols-3 gap-6 mb-10 relative z-10">
+                                            {[
+                                                { icon: <Users size={20} className="text-blue-400" />, value: "142", label: "Active Tenants", color: "bg-blue-500/20" },
+                                                { icon: <CreditCard size={20} className="text-emerald-400" />, value: "₹4.2L", label: "Monthly Rev", color: "bg-emerald-500/20" },
+                                                { icon: <Shield size={20} className="text-rose-400" />, value: "3", label: "Open Issues", color: "bg-rose-500/20" }
+                                            ].map((stat, i) => (
+                                                <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm group-hover:border-primary-500/30 transition-colors duration-500 relative overflow-hidden">
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                    <div className={`h-10 w-10 rounded-lg ${stat.color} mb-3 flex items-center justify-center`}>
+                                                        {stat.icon}
+                                                    </div>
+                                                    <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+                                                    <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{stat.label}</div>
                                                 </div>
                                             ))}
                                         </div>
 
                                         {/* Mock Chart */}
-                                        <div className="h-40 bg-slate-800/30 rounded-lg border border-slate-700/30 flex items-end justify-between px-6 pb-0 pt-8 gap-4 overflow-hidden relative">
-                                            <div className="absolute inset-0 bg-gradient-to-t from-indigo-500/10 to-transparent pointer-events-none" />
-                                            {[40, 70, 50, 90, 60, 80, 50, 75].map((h, i) => (
-                                                <div key={i} className="w-full bg-indigo-500/40 rounded-t-sm hover:bg-indigo-500/60 transition-colors" style={{ height: `${h}%` }} />
+                                        <div className="h-48 bg-white/5 rounded-xl border border-white/5 flex items-end justify-between px-8 pb-0 pt-10 gap-6 overflow-hidden relative z-10">
+                                            <div className="absolute inset-0 bg-gradient-to-t from-primary-500/20 to-transparent pointer-events-none" />
+                                            {[40, 60, 45, 80, 55, 90, 65, 85].map((h, i) => (
+                                                <div key={i} className="w-full bg-gradient-to-t from-primary-600 to-primary-400 rounded-t-md relative group/bar" style={{ height: `${h}%` }}>
+                                                    <div className="absolute inset-0 bg-white/0 hover:bg-white/20 transition-colors rounded-t-md cursor-pointer"></div>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Glass Reflection Overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/5 to-transparent pointer-events-none transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-1000" />
                             </div>
                         </motion.div>
                     </div>
@@ -173,61 +176,69 @@ const Home = () => {
             </section>
 
             {/* Features Grid */}
-            <section className="py-24 bg-slate-50 relative">
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                <div className="max-w-7xl mx-auto px-4">
+            <section className="py-32 relative bg-surface-subtle overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-200 to-transparent" />
+                
+                {/* Decorative background circle */}
+                <div className="absolute -left-64 top-64 w-[500px] h-[500px] bg-primary-50 rounded-full blur-[100px] pointer-events-none"></div>
+                <div className="absolute right-0 bottom-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px] pointer-events-none"></div>
+
+                <div className="max-w-7xl mx-auto px-4 relative z-10">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-center mb-20"
+                        className="text-center mb-24"
                     >
-                        <h2 className="text-4xl font-heading font-bold text-slate-900 mb-4 tracking-tight">Everything you need to run your PG</h2>
-                        <p className="text-xl text-slate-600 max-w-2xl mx-auto font-light">Powerful tools designed to automate your daily operations and improve tenant satisfaction.</p>
+                        <div className="inline-block px-4 py-1.5 rounded-full bg-white border border-slate-200 text-primary-600 font-semibold text-sm mb-6 shadow-sm">
+                            Robust Features
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-heading font-bold text-slate-900 mb-6 tracking-tight">Everything you need to <span className="text-gradient">run your PG</span></h2>
+                        <p className="text-xl text-slate-600 max-w-2xl mx-auto font-light leading-relaxed">Powerful tools designed to automate your daily operations, ensure timely rent collection, and drastically improve tenant satisfaction.</p>
                     </motion.div>
 
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         whileInView="visible"
-                        viewport={{ once: true, margin: "-100px" }}
+                        viewport={{ once: true, margin: "-50px" }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                     >
                         <FeatureCard
-                            icon={<Users className="w-6 h-6 text-white" />}
-                            color="bg-blue-500"
+                            icon={<Users className="w-6 h-6 text-primary-600" />}
+                            bg="bg-primary-50"
                             title="Tenant Onboarding"
-                            description="Digital onboarding workflows, document storage, and profile management for all your residents."
+                            description="Digital onboarding workflows, document storage, and profile management for all your residents. Zero paperwork."
                         />
                         <FeatureCard
-                            icon={<CreditCard className="w-6 h-6 text-white" />}
-                            color="bg-emerald-500"
+                            icon={<CreditCard className="w-6 h-6 text-emerald-600" />}
+                            bg="bg-emerald-50"
                             title="Automated Rent"
-                            description="Automated payment reminders, online collections, and instant digital receipts."
+                            description="Automated payment reminders via WhatsApp, online collections through Razorpay, and instant digital receipts."
                         />
                         <FeatureCard
-                            icon={<Shield className="w-6 h-6 text-white" />}
-                            color="bg-indigo-500"
+                            icon={<Shield className="w-6 h-6 text-blue-600" />}
+                            bg="bg-blue-50"
                             title="Smart Complaints"
-                            description="Track and resolve maintenance issues efficiently. Keep your tenants happy."
+                            description="Let tenants raise issues via their dashboard. Track, assign, and resolve maintenance efficiently to keep them happy."
                         />
                         <FeatureCard
-                            icon={<TrendingUp className="w-6 h-6 text-white" />}
-                            color="bg-amber-500"
+                            icon={<TrendingUp className="w-6 h-6 text-amber-600" />}
+                            bg="bg-amber-50"
                             title="Financial Insights"
-                            description="Real-time revenue tracking, expense management, and profit analytics."
+                            description="Real-time revenue tracking, pending dues alerts, expense management, and comprehensive profit analytics."
                         />
                         <FeatureCard
-                            icon={<Smartphone className="w-6 h-6 text-white" />}
-                            color="bg-purple-500"
+                            icon={<Smartphone className="w-6 h-6 text-fuchsia-600" />}
+                            bg="bg-fuchsia-50"
                             title="Mobile First"
-                            description="Fully responsive dashboard that works perfectly on your phone or tablet."
+                            description="A fully responsive PWA dashboard that works perfectly on your phone, tablet, or desktop computer."
                         />
                         <FeatureCard
-                            icon={<Zap className="w-6 h-6 text-white" />}
-                            color="bg-pink-500"
+                            icon={<Zap className="w-6 h-6 text-rose-600" />}
+                            bg="bg-rose-50"
                             title="Instant Alerts"
-                            description="Real-time notifications for payments, complaints, and important updates."
+                            description="Real-time email and in-app notifications for payments, new complaints, and important system updates."
                         />
                     </motion.div>
                 </div>
@@ -237,23 +248,25 @@ const Home = () => {
 };
 
 // Motion Feature Card
-const FeatureCard = ({ icon, color, title, description }) => (
+const FeatureCard = ({ icon, bg, title, description }) => (
     <motion.div
         variants={{
-            hidden: { opacity: 0, y: 20 },
+            hidden: { opacity: 0, y: 30 },
             visible: { opacity: 1, y: 0 }
         }}
-        whileHover={{ y: -5 }}
-        className="p-8 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group"
+        className="card card-hover group"
     >
-        <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center shadow-lg shadow-${color.replace('bg-', '')}/30 mb-6 group-hover:scale-110 transition-transform duration-300`}>
+        <div className={`w-14 h-14 ${bg} rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-sm border border-black/5`}>
             {icon}
         </div>
-        <h3 className="text-xl font-heading font-bold text-slate-900 mb-3">{title}</h3>
-        <p className="text-slate-600 leading-relaxed mb-4">{description}</p>
-        <a href="#" className="text-primary-600 font-semibold text-sm hover:underline inline-flex items-center group-hover:translate-x-1 transition-transform">
-            Learn more &rarr;
-        </a>
+        <h3 className="text-2xl font-heading font-bold text-slate-900 mb-4 group-hover:text-primary-600 transition-colors">{title}</h3>
+        <p className="text-slate-600 leading-relaxed mb-6">{description}</p>
+        <div className="flex items-center text-primary-600 font-semibold text-sm group-hover:text-primary-700 transition-colors overflow-hidden">
+            <span className="transform group-hover:translate-x-1 transition-transform">Explore feature</span>
+            <svg className="w-4 h-4 ml-1 transform -translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+        </div>
     </motion.div>
 );
 

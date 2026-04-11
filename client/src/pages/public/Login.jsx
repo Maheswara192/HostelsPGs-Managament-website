@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { Building2, User, KeyRound, Mail } from 'lucide-react';
+import { KeyRound, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Login = () => {
@@ -43,39 +43,48 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[url('https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80')] bg-cover bg-center relative">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden bg-[#0b0c10]">
+            
+            {/* Animated Rich Background */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-primary-600/20 rounded-full blur-[150px] mix-blend-screen animate-float"></div>
+                <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-fuchsia-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow"></div>
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
+            </div>
 
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="relative sm:mx-auto sm:w-full sm:max-w-md text-center z-10"
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="relative sm:mx-auto sm:w-full sm:max-w-md text-center z-10 mb-8"
             >
-                <div className="bg-white p-2 rounded-xl inline-block mb-4 shadow-lg">
-                    <img src="/logo.svg" alt="StayManager" className="h-12 w-auto" />
+                <div className="glass-dark inline-flex p-3 rounded-2xl mb-6 shadow-glow cursor-pointer" onClick={() => navigate('/')}>
+                    <img src="/logo.svg" alt="StayManager" className="h-10 w-auto brightness-200" />
                 </div>
-                <h2 className="text-3xl font-extrabold text-white tracking-tight">Sign in to your account</h2>
-                <p className="mt-2 text-slate-200">Welcome back! Please enter your details.</p>
+                <h2 className="text-4xl font-heading font-extrabold text-white tracking-tight">Welcome Back</h2>
+                <p className="mt-3 text-slate-300 font-light text-lg">Enter your details to access your dashboard.</p>
             </motion.div>
 
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+                className="sm:mx-auto sm:w-full sm:max-w-md relative z-10"
             >
-                <div className="bg-white py-8 px-4 shadow-2xl rounded-2xl sm:px-10 border border-white/20">
+                <div className="glass backdrop-blur-2xl py-10 px-6 sm:px-10 rounded-3xl border border-white/50 shadow-2xl relative overflow-hidden">
+                    
+                    {/* Inner glowing highlight */}
+                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
 
                     {/* Tabs */}
-                    <div className="flex bg-slate-100 p-1 rounded-lg mb-8">
+                    <div className="flex bg-slate-900/10 backdrop-blur-md p-1.5 rounded-xl mb-8 border border-white/20">
                         {['owner', 'tenant', 'admin'].map((role) => (
                             <button
                                 key={role}
                                 onClick={() => setActiveTab(role)}
-                                className={`flex-1 py-2 text-sm font-semibold capitalize rounded-md transition-all ${activeTab === role
-                                    ? 'bg-white text-primary-600 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                className={`flex-1 py-2.5 text-sm font-bold capitalize rounded-lg transition-all duration-300 ${activeTab === role
+                                    ? 'bg-white text-primary-600 shadow-md transform scale-[1.02]'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                                     }`}
                             >
                                 {role}
@@ -85,49 +94,51 @@ const Login = () => {
 
                     <form className="space-y-6" onSubmit={handleLogin}>
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded text-sm text-center animate-shake">
+                            <div className="bg-red-500/10 border border-red-500/50 backdrop-blur-sm text-red-600 px-4 py-3 rounded-xl text-sm text-center animate-fade-in">
                                 {error}
                             </div>
                         )}
 
-                        <Input
-                            id="email"
-                            label="Email address"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            placeholder="you@example.com"
-                            icon={Mail}
-                        />
+                        <div className="space-y-5">
+                            <Input
+                                id="email"
+                                label="Email address"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                placeholder="you@example.com"
+                                icon={Mail}
+                            />
 
-                        <Input
-                            id="password"
-                            label="Password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            icon={KeyRound}
-                        />
+                            <Input
+                                id="password"
+                                label="Password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                icon={KeyRound}
+                            />
+                        </div>
 
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between pt-2">
                             <div className="text-sm">
-                                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }} className="font-medium text-primary-600 hover:text-primary-500">
+                                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }} className="font-semibold text-primary-600 hover:text-primary-700 transition-colors">
                                     Forgot your password?
                                 </a>
                             </div>
                         </div>
 
-                        <Button type="submit" variant="primary" className="w-full justify-center" isLoading={isLoading}>
-                            Sign In as {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                        <Button type="submit" variant="primary" className="w-full text-lg py-3 mt-4" isLoading={isLoading}>
+                            Sign In to {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Portal
                         </Button>
                     </form>
 
                     {activeTab === 'owner' && (
-                        <div className="mt-6 text-center">
-                            <p className="text-sm text-slate-600">
-                                New to StayManager? <span className="font-bold text-primary-600 hover:text-primary-700 hover:underline cursor-pointer" onClick={() => navigate('/register')}>Register your PG</span>
+                        <div className="mt-8 text-center border-t border-slate-200/50 pt-6">
+                            <p className="text-sm text-slate-600 font-medium">
+                                New to StayManager? <span className="font-bold text-primary-600 hover:text-primary-700 hover:underline cursor-pointer transition-colors" onClick={() => navigate('/register')}>Create an account</span>
                             </p>
                         </div>
                     )}
