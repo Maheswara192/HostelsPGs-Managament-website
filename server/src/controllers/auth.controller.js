@@ -137,7 +137,7 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
+        const user = await User.findById(req.user._id || req.user.id).select('-password');
         res.json({ success: true, data: user });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server Error' });
