@@ -24,16 +24,20 @@ Multi-tenancy is handled via the **Pool Model** (Logical Isolation). All tenants
 - **JWT Trust Validation:** The application mutates the request lifecycle to forcefully append the authenticated user's `pg_id` (extracted from the secure JWT) directly to the operation scope, completely eliminating parameter tampering attacks.
 - **Database Optimization:** All multi-tenant collections (Rooms, Visitors, Payments, Tenants) feature compound indexing on `{ pg_id: 1, ... }` to ensure instantaneous cross-tenant routing without full collection scans.
 
+- **Background Job Processing:** Asynchronous, non-blocking email delivery and rent reminder scheduling handled by Redis and BullMQ to maintain high API throughput.
+
 ### Core Architecture
 ```mermaid
 graph TD
     Client[React Client SPA] -->|HTTPS| LoadBalancer[Nginx Load Balancer]
     LoadBalancer --> API[Node.js / Express API]
     API --> DB[(MongoDB Atlas)]
+    API -->|Cache & Queues| Redis[(Redis)]
     API -->|Real-time| Socket[Socket.io Server]
     Socket <--> Client
+    Redis -->|Process Jobs| Workers[Background Workers / BullMQ]
+    Workers -.->|Email Services| SMTP[SMTP / Nodemailer]
     API -.->|Webhooks / Payment| Razorpay[Razorpay API Gateway]
-    API -.->|Email Services| SMTP[SMTP / Nodemailer]
 ```
 
 ### Request Flow (Authentication & RBAC)
