@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
-const enforceIsolation = require('../middlewares/isolation.middleware');
+const { enforceIsolation } = require('../middlewares/isolation.middleware');
 const {
     createComplaint,
     updateComplaintStatus,
