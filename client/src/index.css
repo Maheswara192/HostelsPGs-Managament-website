@@ -39,15 +39,24 @@
     }
 
     .btn-primary {
-        @apply btn bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 hover:from-primary-500 hover:to-primary-400 border border-primary-400/20;
+        @apply btn bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/30 border border-primary-400/20;
+    }
+    .btn-primary:hover {
+        @apply shadow-primary-500/50 from-primary-500 to-primary-400;
     }
 
     .btn-accent {
-        @apply btn bg-gradient-to-r from-accent to-accent-hover text-white shadow-lg shadow-accent/30 hover:shadow-accent/50;
+        @apply btn bg-gradient-to-r from-accent to-accent-hover text-white shadow-lg shadow-accent/30;
+    }
+    .btn-accent:hover {
+        @apply shadow-accent/50;
     }
 
     .btn-outline {
-        @apply btn border-2 border-slate-200/60 bg-white/50 backdrop-blur-sm text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-sm hover:shadow-md;
+        @apply btn border-2 border-slate-200/60 bg-white/50 backdrop-blur-sm text-slate-700 shadow-sm;
+    }
+    .btn-outline:hover {
+        @apply bg-slate-50 border-slate-300 shadow-md;
     }
 
     .input-field {
@@ -55,11 +64,17 @@
     }
 
     .card {
-        @apply bg-white/80 backdrop-blur-xl p-8 rounded-2xl border border-white/60 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-500;
+        @apply bg-white/80 backdrop-blur-xl p-8 rounded-2xl border border-white/60 shadow-lg shadow-slate-200/40 transition-all duration-500;
+    }
+    .card:hover {
+        @apply shadow-xl shadow-slate-200/60;
     }
 
     .card-hover {
-        @apply hover:-translate-y-2 hover:border-primary-500/30 transition-all duration-500;
+        @apply transition-all duration-500;
+    }
+    .card-hover:hover {
+        @apply -translate-y-2 border-primary-500/30;
     }
 }
 
