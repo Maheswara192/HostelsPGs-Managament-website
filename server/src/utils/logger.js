@@ -17,6 +17,7 @@ const logFormat = winston.format.combine(
     return `[${timestamp}] [${traceId}] ${level.toUpperCase()}: ${message} ${stack || ''}`;
   })
 );
+const logger = winston.createLogger({
   level: NODE_ENV === 'development' ? 'debug' : 'info',
   format: logFormat,
   transports: [
