@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true })); // Handle URL-encoded data
 // CORS Configuration for Custom Domain
 const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['http://localhost:5173', 'http://localhost:3000'];
+    : ['http://localhost:5173', 'http://localhost:3000', process.env.CLIENT_URL].filter(Boolean);
 
 app.use(cors({
     origin: function (origin, callback) {
