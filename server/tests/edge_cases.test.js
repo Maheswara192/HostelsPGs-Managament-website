@@ -1,6 +1,6 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const app = require('../src/app');
 const bcrypt = require('bcryptjs');
 const User = require('../src/models/User');
@@ -19,23 +19,13 @@ describe('⚠️ Edge Case & Resilience Tests', () => {
 
     beforeAll(async () => {
         try {
-            console.log("🔵 SETUP: Starting In-Memory DB...");
-            mongod = await MongoMemoryServer.create();
+            console.log("🔵 SETUP: Starting In-Memory DB (Replica Set)...");
+            mongod = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
             const uri = mongod.getUri();
 
             if (mongoose.connection.readyState !== 0) await mongoose.connection.close();
             await mongoose.connect(uri);
             console.log("✅ SETUP: DB Connected");
-
-            // MOCK TRANSACTION SESSION
-            jest.spyOn(mongoose, 'startSession').mockResolvedValue({
-                startTransaction: jest.fn(),
-                commitTransaction: jest.fn(),
-                abortTransaction: jest.fn(),
-                endSession: jest.fn(),
-                inTransaction: () => true,
-                withTransaction: async function (cb) { await cb(this); }
-            });
 
             // Register Owner
             console.log("🔵 SETUP: Registering Owner...");

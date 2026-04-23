@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 import OwnerTenants from './Tenants';
@@ -29,6 +29,8 @@ describe('OwnerTenants Component', () => {
         { _id: 'r1', number: '101', type: 'Single', capacity: 1 }
     ];
 
+    const file = new File(['dummy'], 'id-proof.pdf', { type: 'application/pdf' });
+
     it('renders tenants list correctly', async () => {
         ownerService.getTenants.mockResolvedValue({ success: true, data: mockTenants });
         ownerService.getRooms.mockResolvedValue({ success: true, data: mockRooms });
@@ -42,7 +44,7 @@ describe('OwnerTenants Component', () => {
         await waitFor(() => {
             expect(screen.getByText('Tenant 1')).toBeInTheDocument();
             expect(screen.getByText('1234567890')).toBeInTheDocument();
-            expect(screen.getByText('₹5000')).toBeInTheDocument();
+            expect(screen.getByText('Rent/mo')).toBeInTheDocument();
         });
     });
 
@@ -60,14 +62,16 @@ describe('OwnerTenants Component', () => {
         await waitFor(() => expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument());
 
         // Click Add Tenant
-        fireEvent.click(screen.getByText('Add Tenant'));
+        await act(async () => {
+            fireEvent.click(screen.getByText('Add Tenant'));
+        });
 
         // Check for inputs
-        const nameInput = screen.getByPlaceholderText('Full Name');
-        const emailInput = screen.getByPlaceholderText('Email Address');
-        const mobileInput = screen.getByPlaceholderText('Mobile Number');
-        const passwordInput = screen.getByPlaceholderText('Password');
-        const rentInput = screen.getByPlaceholderText('Rent Amount');
+        const nameInput = screen.getByPlaceholderText('Full Name *');
+        const emailInput = screen.getByPlaceholderText('Email Address *');
+        const mobileInput = screen.getByPlaceholderText('Mobile Number (10 digits) *');
+        const passwordInput = screen.getByPlaceholderText('Password *');
+        const rentInput = screen.getByPlaceholderText('Rent Amount *');
 
         expect(nameInput).toBeInTheDocument();
         expect(mobileInput).toBeInTheDocument();
@@ -78,6 +82,7 @@ describe('OwnerTenants Component', () => {
         fireEvent.change(mobileInput, { target: { value: '9876543210' } });
         fireEvent.change(passwordInput, { target: { value: 'password123' } });
         fireEvent.change(rentInput, { target: { value: '6000' } });
+        fireEvent.change(screen.getByPlaceholderText(/ID Number/), { target: { value: '123456789012' } });
 
         // Check values
         expect(mobileInput.value).toBe('9876543210');
@@ -95,27 +100,30 @@ describe('OwnerTenants Component', () => {
         );
 
         await waitFor(() => expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument());
-        fireEvent.click(screen.getByText('Add Tenant'));
+        await act(async () => {
+            fireEvent.click(screen.getByText('Add Tenant'));
+        });
 
         // Fill form
-        fireEvent.change(screen.getByPlaceholderText('Full Name'), { target: { value: 'New Tenant' } });
-        fireEvent.change(screen.getByPlaceholderText('Email Address'), { target: { value: 'new@test.com' } });
-        fireEvent.change(screen.getByPlaceholderText('Mobile Number'), { target: { value: '9876543210' } });
-        fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'password123' } });
-        fireEvent.change(screen.getByPlaceholderText('Rent Amount'), { target: { value: '6000' } });
+        fireEvent.change(screen.getByPlaceholderText('Full Name *'), { target: { value: 'New Tenant' } });
+        fireEvent.change(screen.getByPlaceholderText('Email Address *'), { target: { value: 'new@test.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Mobile Number (10 digits) *'), { target: { value: '9876543210' } });
+        fireEvent.change(screen.getByPlaceholderText('Password *'), { target: { value: 'password123' } });
+        fireEvent.change(screen.getByPlaceholderText('Rent Amount *'), { target: { value: '6000' } });
+        fireEvent.change(screen.getByPlaceholderText(/ID Number/), { target: { value: '123456789012' } });
+        fireEvent.change(screen.getByPlaceholderText(/Permanent Home Address/), { target: { value: '123 Test Street' } });
 
         // Select Room
-        // Use getAllByRole if multiple or getByRole with name if accessible name exists. 
-        // Assuming label "Select Room" is linked or we can select by name attribute using querySelector logic or just getting the first one if we know order.
-        // Better: Select by name attribute for robustness in form.
-        // Testing Library doesn't have getByResult(name="..."), but we can use container.querySelector or getByRole with name if label exists.
-        // The form has <select name="room_id">.
-        const roomSelects = screen.getAllByRole('combobox');
-        const roomSelect = roomSelects.find(el => el.getAttribute('name') === 'room_id');
+        const roomSelect = document.querySelector('select[name="room_id"]');
         fireEvent.change(roomSelect, { target: { value: 'r1' } });
 
+        const frontInput = document.querySelector('input[name="idProofFront"]');
+        const backInput = document.querySelector('input[name="idProofBack"]');
+        fireEvent.change(frontInput, { target: { files: [file] } });
+        fireEvent.change(backInput, { target: { files: [file] } });
+
         // Submit
-        fireEvent.click(screen.getByText('Submit'));
+        fireEvent.submit(document.querySelector('form'));
 
         await waitFor(() => {
             expect(ownerService.addTenant).toHaveBeenCalledWith(expect.any(FormData));

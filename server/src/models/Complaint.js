@@ -45,4 +45,6 @@ const complaintSchema = new mongoose.Schema({
     }
 });
 
+complaintSchema.index({ pg_id: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Complaint', complaintSchema);

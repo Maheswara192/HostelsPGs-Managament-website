@@ -33,4 +33,7 @@ const housekeepingLogSchema = new mongoose.Schema({
 // Compound index to ensure one log per room per day (or fast lookup)
 housekeepingLogSchema.index({ pg_id: 1, date: 1, room_id: 1 }, { unique: true });
 
+// Optimized index for dashboard lookups (room_id + date sort)
+housekeepingLogSchema.index({ room_id: 1, date: -1 });
+
 module.exports = mongoose.model('HousekeepingLog', housekeepingLogSchema);

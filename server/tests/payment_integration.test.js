@@ -3,42 +3,63 @@ const mongoose = require('mongoose');
 const app = require('../src/app');
 const User = require('../src/models/User');
 const Payment = require('../src/models/Payment');
+const PG = require('../src/models/PG');
+const Room = require('../src/models/Room');
+const Tenant = require('../src/models/Tenant');
 const paymentService = require('../src/services/payment.service');
 const crypto = require('crypto');
+const dbHandler = require('./utils/db-handler');
 
 // MOCK DATA
 const TENANT_USER = { name: "Pay Test Tenant", email: `paytest_${Date.now()}@test.com`, password: "password123", role: "tenant" };
 
 describe('💳 Payment Integration Tests', () => {
     let token, tenantId;
-    let mongod;
 
     beforeAll(async () => {
         try {
-            console.log("🔵 SETUP: Starting In-Memory DB...");
-            const { MongoMemoryServer } = require('mongodb-memory-server');
-            mongod = await MongoMemoryServer.create();
-            const testURI = mongod.getUri();
+            console.log("🔵 SETUP: Starting In-Memory Replica Set...");
+            await dbHandler.connect();
+            console.log("✅ SETUP: DB Connected (Replica Set)");
 
-            // Close any existing connections
-            if (mongoose.connection.readyState !== 0) await mongoose.connection.close();
-
-            await mongoose.connect(testURI);
-            console.log("✅ SETUP: DB Connected (Memory)");
-
-            // Cleanup (Not strictly needed for In-Memory but good practice if reused)
-            // await User.deleteMany({}); 
-
-            // Setup Tenant
             console.log("🔵 SETUP: Registering Tenant...");
             const res = await request(app).post('/api/auth/register').send(TENANT_USER);
             if (res.status !== 201) {
                 console.error("❌ SETUP FAILED: Register Tenant:", res.body);
                 throw new Error("Failed to register tenant: " + JSON.stringify(res.body));
             }
+
+            const tenantUserId = res.body.data.user ? res.body.data.user._id : res.body.data._id;
             token = res.body.data.token;
-            tenantId = res.body.data.user ? res.body.data.user._id : res.body.data._id;
-            console.log("✅ SETUP: Tenant Registered.");
+
+            const pg = await PG.create({
+                name: 'Payment Test PG',
+                address: '123 Test Street',
+                city: 'Test City',
+                type: 'Both',
+                owner_id: tenantUserId
+            });
+
+            const room = await Room.create({
+                pg_id: pg._id,
+                number: '101',
+                type: 'Single',
+                capacity: 1,
+                price: 5000
+            });
+
+            const tenant = await Tenant.create({
+                user_id: tenantUserId,
+                pg_id: pg._id,
+                room_id: room._id,
+                rentAmount: 5000,
+                contact_number: '9876543210'
+            });
+
+            await User.findByIdAndUpdate(tenantUserId, { pg_id: pg._id });
+
+            tenantId = tenant._id.toString();
+            console.log("✅ SETUP: Tenant profile ready.");
         } catch (e) {
             console.error("❌ BEFORE_ALL ERROR:", e);
             throw e;
@@ -46,8 +67,7 @@ describe('💳 Payment Integration Tests', () => {
     });
 
     afterAll(async () => {
-        await mongoose.connection.close();
-        if (mongod) await mongod.stop();
+        await dbHandler.closeDatabase();
     });
 
     let orderId;
@@ -138,13 +158,14 @@ describe('💳 Payment Integration Tests', () => {
         // Create a stalled payment
         const stalledOrderId = `order_stalled_${Date.now()}`;
         await Payment.create({
-            pg_id: tenantId, // dummy
-            user_id: tenantId,
+            pg_id: new mongoose.Types.ObjectId(),
+            user_id: new mongoose.Types.ObjectId(),
             amount: 1000,
             currency: 'INR',
             type: 'RENT',
             status: 'CREATED', // Stalled
             gateway_order_id: stalledOrderId,
+            tenant_id: new mongoose.Types.ObjectId(),
             transaction_date: Date.now()
         });
 

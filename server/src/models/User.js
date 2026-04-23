@@ -43,6 +43,14 @@ const userSchema = new mongoose.Schema({
     },
     setupTokenExpires: Date,
 
+    // Password Reset OTP Fields
+    resetPasswordOtp: {
+        type: String
+    },
+    resetPasswordExpires: {
+        type: Date
+    },
+
     // Account Lifecycle State
     accountStatus: {
         type: String,
@@ -73,5 +81,9 @@ const userSchema = new mongoose.Schema({
         type: Date
     }
 });
+
+// Index for multi-tenant isolation lookups
+userSchema.index({ pg_id: 1 });
+userSchema.index({ role: 1 });
 
 module.exports = mongoose.model('User', userSchema);

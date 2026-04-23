@@ -46,6 +46,6 @@ const roomSchema = new mongoose.Schema({
     }
 });
 
-roomSchema.index({ pg_id: 1 });
+roomSchema.index({ pg_id: 1, number: 1 }, { unique: true });
 
 module.exports = mongoose.model('Room', roomSchema);

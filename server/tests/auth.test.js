@@ -40,7 +40,7 @@ describe('Auth Endpoints', () => {
                 role: 'admin'
             });
 
-        expect(res.statusCode).toEqual(403);
+        expect(res.statusCode).toEqual(400);
         expect(res.body.success).toBe(false);
     });
 

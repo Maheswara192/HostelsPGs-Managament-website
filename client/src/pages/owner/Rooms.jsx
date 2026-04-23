@@ -3,7 +3,11 @@ import ownerService from '../../services/owner.service';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import SearchInput from '../../components/common/SearchInput';
+import Skeleton from '../../components/common/Skeleton';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import Modal from '../../components/common/Modal';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Rooms = () => {
     const [rooms, setRooms] = useState([]);
@@ -11,6 +15,10 @@ const Rooms = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hasAccess, setHasAccess] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [submitting, setSubmitting] = useState(false); // UI-016 FIX: loading state for form
+
+    // UI-014 FIX: Use ConfirmDialog instead of window.confirm
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const [formData, setFormData] = useState({
         roomNumber: '',
@@ -60,6 +68,7 @@ const Rooms = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitting(true); // UI-016 FIX
         try {
             if (editingId) {
                 const res = await ownerService.updateRoom(editingId, formData);
@@ -68,6 +77,7 @@ const Rooms = () => {
                     setIsModalOpen(false);
                     setEditingId(null);
                     setFormData({ roomNumber: '', type: 'Single', rent: '', capacity: 1, amenities: '' });
+                    toast.success('Room updated successfully');
                 }
             } else {
                 const res = await ownerService.createRoom(formData);
@@ -75,31 +85,38 @@ const Rooms = () => {
                     setRooms([...rooms, res.data]);
                     setIsModalOpen(false);
                     setFormData({ roomNumber: '', type: 'Single', rent: '', capacity: 1, amenities: '' });
+                    toast.success('Room created successfully');
                 }
             }
         } catch (error) {
             console.error('Error saving room:', error);
+            // UI-013 FIX: Use toast instead of alert()
             if (error.response && error.response.status === 403) {
-                alert("Subscription Required: " + (error.response.data.message || "Please upgrade."));
+                toast.error("Subscription Required: " + (error.response.data.message || "Please upgrade your plan."));
             } else {
                 const msg = error.response?.data?.message || 'Failed to save room';
-                alert(msg);
+                toast.error(msg);
             }
+        } finally {
+            setSubmitting(false); // UI-016 FIX
         }
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this room?')) {
-            try {
-                await ownerService.deleteRoom(id);
-                setRooms(rooms.filter(room => room._id !== id));
-            } catch (error) {
-                console.error('Error deleting room:', error);
-                if (error.response && error.response.status === 403) {
-                    alert("Subscription Required: " + (error.response.data.message || "Please upgrade."));
-                }
+        try {
+            await ownerService.deleteRoom(id);
+            setRooms(rooms.filter(room => room._id !== id));
+            toast.success('Room deleted successfully');
+        } catch (error) {
+            console.error('Error deleting room:', error);
+            // UI-022 FIX: Always show error feedback
+            if (error.response && error.response.status === 403) {
+                toast.error("Subscription Required: " + (error.response.data.message || "Please upgrade."));
+            } else {
+                toast.error(error.response?.data?.message || 'Failed to delete room');
             }
         }
+        setDeleteTarget(null);
     };
 
     if (!hasAccess) {
@@ -115,7 +132,7 @@ const Rooms = () => {
                     </p>
                     <button
                         onClick={() => window.location.href = '/pricing'}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+                        className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
                     >
                         View Plans
                     </button>
@@ -146,8 +163,24 @@ const Rooms = () => {
                 </div>
             </div>
 
+            {/* UI-010 FIX: Proper skeleton loading state */}
             {loading ? (
-                <p>Loading rooms...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                            <div className="flex justify-between">
+                                <Skeleton className="h-6 w-24" />
+                                <Skeleton className="h-6 w-16 rounded-full" />
+                            </div>
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-4 w-28" />
+                            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                                <Skeleton className="h-8 w-8 rounded-lg" />
+                                <Skeleton className="h-8 w-8 rounded-lg" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredRooms.length === 0 ? (
@@ -159,19 +192,42 @@ const Rooms = () => {
                             <div key={room._id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                                 <div className="flex justify-between items-start mb-4">
                                     <h3 className="text-lg font-bold text-slate-900">Room {room.number}</h3>
-                                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">
+                                    <span className="px-3 py-1 bg-primary-100 text-primary-700 text-xs font-semibold rounded-full">
                                         {room.type}
                                     </span>
                                 </div>
                                 <div className="space-y-2 text-sm text-slate-600 mb-4">
                                     <p>Rent: <span className="font-semibold text-slate-900">₹{room.price}</span>/month</p>
                                     <p>Capacity: {room.capacity} Persons</p>
+                                    {/* UI-020 FIX: Show occupancy with progress bar */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span>Occupied</span>
+                                            <span className={`font-semibold ${
+                                                (room.occupied || 0) >= room.capacity ? 'text-red-600' :
+                                                (room.occupied || 0) >= room.capacity * 0.75 ? 'text-amber-600' :
+                                                'text-emerald-600'
+                                            }`}>
+                                                {room.occupied || 0}/{room.capacity}
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${
+                                                    (room.occupied || 0) >= room.capacity ? 'bg-red-500' :
+                                                    (room.occupied || 0) >= room.capacity * 0.75 ? 'bg-amber-500' :
+                                                    'bg-emerald-500'
+                                                }`}
+                                                style={{ width: `${Math.min(100, ((room.occupied || 0) / room.capacity) * 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100">
-                                    <button onClick={() => handleEdit(room)} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors">
+                                    <button onClick={() => handleEdit(room)} className="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors">
                                         <Edit2 size={18} />
                                     </button>
-                                    <button onClick={() => handleDelete(room._id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                    <button onClick={() => setDeleteTarget(room)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                                         <Trash2 size={18} />
                                     </button>
                                 </div>
@@ -181,36 +237,54 @@ const Rooms = () => {
                 </div>
             )}
 
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-xl w-full max-w-md">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">{editingId ? 'Edit Room' : 'Add New Room'}</h2>
-                            <button onClick={() => { setIsModalOpen(false); setEditingId(null); setFormData({ roomNumber: '', type: 'Single', rent: '', capacity: 1, amenities: '' }); }}><X size={24} /></button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <Input label="Room Number" name="roomNumber" value={formData.roomNumber} onChange={handleInputChange} required />
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
-                                <select
-                                    name="type"
-                                    value={formData.type}
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                >
-                                    <option value="Single">Single</option>
-                                    <option value="Double">Double</option>
-                                    <option value="Triple">Triple</option>
-                                </select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input label="Rent (₹)" name="rent" type="number" value={formData.rent} onChange={handleInputChange} required />
-                                <Input label="Capacity" name="capacity" type="number" value={formData.capacity} onChange={handleInputChange} required />
-                            </div>
-                            <Button type="submit" className="w-full">Create Room</Button>
-                        </form>
+            {/* UI-024 FIX: Accessible Modal with focus trap + ARIA */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => { setIsModalOpen(false); setEditingId(null); setFormData({ roomNumber: '', type: 'Single', rent: '', capacity: 1, amenities: '' }); }}
+                title={editingId ? 'Edit Room' : 'Add New Room'}
+            >
+                <div className="p-6">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-bold">{editingId ? 'Edit Room' : 'Add New Room'}</h2>
+                        <button onClick={() => { setIsModalOpen(false); setEditingId(null); setFormData({ roomNumber: '', type: 'Single', rent: '', capacity: 1, amenities: '' }); }}><X size={24} /></button>
                     </div>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <Input label="Room Number" name="roomNumber" value={formData.roomNumber} onChange={handleInputChange} required />
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                            <select
+                                name="type"
+                                value={formData.type}
+                                onChange={handleInputChange}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            >
+                                <option value="Single">Single</option>
+                                <option value="Double">Double</option>
+                                <option value="Triple">Triple</option>
+                                <option value="Dorm">Dorm</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Rent (₹)" name="rent" type="number" value={formData.rent} onChange={handleInputChange} required />
+                            <Input label="Capacity" name="capacity" type="number" value={formData.capacity} onChange={handleInputChange} required />
+                        </div>
+                        <Button type="submit" className="w-full" isLoading={submitting}>
+                            {editingId ? 'Update Room' : 'Create Room'}
+                        </Button>
+                    </form>
                 </div>
+            </Modal>
+
+            {/* UI-014 FIX: ConfirmDialog instead of window.confirm */}
+            {deleteTarget && (
+                <ConfirmDialog
+                    title="Delete Room"
+                    message={`Are you sure you want to delete Room ${deleteTarget.number}? This action cannot be undone.`}
+                    onConfirm={() => handleDelete(deleteTarget._id)}
+                    onCancel={() => setDeleteTarget(null)}
+                    confirmText="Delete"
+                    variant="danger"
+                />
             )}
         </div>
     );

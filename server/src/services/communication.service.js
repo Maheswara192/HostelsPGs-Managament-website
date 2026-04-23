@@ -1,7 +1,5 @@
 const OnboardingCommunication = require('../models/OnboardingCommunication');
-const emailService = require('./email.service');
 const whatsappService = require('./whatsapp.service');
-const OnboardingAnalytics = require('../models/OnboardingAnalytics');
 const { PLAN_LIMITS } = require('../config/plans');
 
 /**
@@ -22,7 +20,8 @@ const sendOnboardingCommunication = async (user, pg, token, type = 'WELCOME') =>
             email: user.email,
             name: user.name,
             token: token,
-            pgName: pg.name
+            pgName: pg.name,
+            lang: user.preferredLanguage || 'en'
         });
         const emailSent = true; // Log as queued/sent for initial fast response
         results.email = emailSent;
@@ -34,14 +33,6 @@ const sendOnboardingCommunication = async (user, pg, token, type = 'WELCOME') =>
             channel: 'EMAIL',
             template_key: 'setupEmailBody',
             delivery_status: emailSent ? 'SENT' : 'FAILED'
-        });
-
-        // Analytics
-        await OnboardingAnalytics.create({
-            pg_id: pg._id,
-            tenant_id: user._id,
-            step: 'EMAIL_SENT',
-            meta: { type }
         });
     } // End Plan Check
     // 2. Send WhatsApp (if mobile exists AND Plan Allows)

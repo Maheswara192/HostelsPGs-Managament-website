@@ -1,4 +1,5 @@
 const Complaint = require('../models/Complaint');
+const Tenant = require('../models/Tenant');
 const { getIO } = require('../services/socket.service');
 
 // @desc    Create a Complaint
@@ -12,9 +13,16 @@ exports.createComplaint = async (req, res) => {
             return res.status(403).json({ success: false, message: 'User not assigned to a PG' });
         }
 
+        // BUG-026 FIX: Look up the Tenant profile to get the correct Tenant ObjectId
+        // Complaint schema refs 'Tenant', not 'User'
+        const tenant = await Tenant.findOne({ user_id: req.user._id });
+        if (!tenant) {
+            return res.status(404).json({ success: false, message: 'Tenant profile not found' });
+        }
+
         const complaint = await Complaint.create({
             pg_id: req.user.pg_id,
-            tenant_id: req.user._id,
+            tenant_id: tenant._id, // FIX: Use Tenant._id, not User._id
             title,
             description,
             category,
@@ -25,7 +33,7 @@ exports.createComplaint = async (req, res) => {
         try {
             const io = getIO();
             // Emit to the specific PG space
-            io.to(`pg_${req.user.pg_id}`).emit('new_complaint', {
+            io.to(`pg_${req.user.pg_id}`).emit('NEW_COMPLAINT', {
                 complaint,
                 tenantName: req.user.name
             });
@@ -52,6 +60,11 @@ exports.updateComplaintStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Complaint not found' });
         }
 
+        // BUG-007 FIX: Enforce PG ownership — prevent cross-tenant data access
+        if (req.user.role !== 'admin' && complaint.pg_id.toString() !== req.user.pg_id.toString()) {
+            return res.status(403).json({ success: false, message: 'Not authorized to update this complaint' });
+        }
+
         complaint.status = status;
         if (adminComment) complaint.adminComment = adminComment;
         await complaint.save();
@@ -59,7 +72,7 @@ exports.updateComplaintStatus = async (req, res) => {
         // 🟢 Emit Real-Time Socket Event to Specific Tenant
         try {
             const io = getIO();
-            io.to(`user_${complaint.tenant_id}`).emit('complaint_updated', complaint);
+            io.to(`user_${complaint.tenant_id}`).emit('COMPLAINT_UPDATED', complaint);
         } catch (socketError) {
             console.error('Socket Emission Error:', socketError.message);
         }
@@ -78,9 +91,13 @@ exports.getComplaints = async (req, res) => {
     try {
         let filter = { pg_id: req.user.pg_id };
         
-        // If Tenant, only show their own complaints
+        // BUG-008 FIX: Look up Tenant profile to get correct Tenant ObjectId for filtering
         if (req.user.role === 'tenant') {
-            filter.tenant_id = req.user._id;
+            const tenant = await Tenant.findOne({ user_id: req.user._id });
+            if (!tenant) {
+                return res.status(404).json({ success: false, message: 'Tenant profile not found' });
+            }
+            filter.tenant_id = tenant._id; // FIX: Use Tenant._id, not User._id
         }
 
         const complaints = await Complaint.find(filter).sort({ createdAt: -1 });

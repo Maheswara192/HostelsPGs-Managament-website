@@ -1,6 +1,13 @@
 const Visitor = require('../models/Visitor');
 const GuestRequest = require('../models/GuestRequest');
 
+const getScopedPgId = (req) => {
+    if (req.user.role === 'admin') {
+        return null;
+    }
+    return req.user.pg_id;
+};
+
 // --- Visitor Management ---
 
 // Log New Visitor
@@ -38,11 +45,22 @@ exports.getActiveVisitors = async (req, res) => {
 exports.markVisitorExit = async (req, res) => {
     try {
         const { id } = req.params;
-        const visitor = await Visitor.findByIdAndUpdate(
-            id,
+        const query = { _id: id };
+
+        if (getScopedPgId(req)) {
+            query.pg_id = getScopedPgId(req);
+        }
+
+        const visitor = await Visitor.findOneAndUpdate(
+            query,
             { status: 'EXITED', exitTime: Date.now() },
             { new: true }
         );
+
+        if (!visitor) {
+            return res.status(404).json({ message: 'Visitor not found' });
+        }
+
         res.json(visitor);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -103,12 +121,21 @@ exports.updateGuestRequestStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body; // APPROVED or REJECTED
+        const query = { _id: id };
 
-        const request = await GuestRequest.findByIdAndUpdate(
-            id,
+        if (getScopedPgId(req)) {
+            query.pg_id = getScopedPgId(req);
+        }
+
+        const request = await GuestRequest.findOneAndUpdate(
+            query,
             { status },
             { new: true }
         );
+
+        if (!request) {
+            return res.status(404).json({ message: 'Guest request not found' });
+        }
 
         res.json(request);
     } catch (error) {

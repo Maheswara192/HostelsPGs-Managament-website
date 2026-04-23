@@ -21,7 +21,7 @@ const Header = ({ onMenuClick }) => {
                     <p className="text-sm font-semibold text-slate-900">{user?.name}</p>
                     <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
                 </div>
-                <div className="h-10 w-10 bg-primary-light rounded-full flex items-center justify-center text-primary">
+                <div className="h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
                     <User size={20} />
                 </div>
             </div>

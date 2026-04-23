@@ -33,7 +33,7 @@ describe('Input Component', () => {
         render(<Input name="username" error="Invalid username" />);
         const input = screen.getByRole('textbox');
         expect(input).toHaveClass('border-red-500');
-        expect(input).toHaveClass('focus:ring-red-500');
+        expect(input).toHaveClass('focus:ring-red-500/20');
     });
 
     it('does not apply error styling when no error', () => {

@@ -7,6 +7,7 @@ import securityService from '../../services/security.service';
 import StatsCard from '../../components/common/StatsCard';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import Modal from '../../components/common/Modal';
 import toast from 'react-hot-toast';
 import Skeleton from '../../components/common/Skeleton';
 
@@ -27,7 +28,7 @@ const TenantDashboard = () => {
     const fetchDashboard = async () => {
         try {
             const res = await tenantService.getDashboard();
-            setDashboardData(res);
+            setDashboardData(res.data);
         } catch (error) {
             console.error(error);
             toast.error('Failed to load dashboard');
@@ -39,7 +40,7 @@ const TenantDashboard = () => {
     const fetchGuestRequests = async () => {
         try {
             const res = await securityService.getMyRequests();
-            setMyRequests(res);
+            setMyRequests(Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
         } catch (error) {
             console.error(error);
         }
@@ -66,7 +67,29 @@ const TenantDashboard = () => {
         }
     };
 
-    if (loading) return <Skeleton className="h-96 w-full" />;
+    // UI-019 FIX: Proper multi-card skeleton matching page layout
+    if (loading) return (
+        <div className="space-y-8 max-w-7xl mx-auto">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="space-y-2 flex-1">
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
+                        <Skeleton className="h-12 w-12 rounded-lg" />
+                        <div className="space-y-2 flex-1">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-8 w-16" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 
     const pg = dashboardData?.pg;
     const tenant = dashboardData?.tenant;
@@ -150,58 +173,77 @@ const TenantDashboard = () => {
                 />
             </div>
 
+            {/* UI-009 FIX: Two-column grid with content in both columns */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Quick Actions / Guests */}
-                <div className="space-y-6">
-                    {/* Active Guest Requests */}
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-heading font-semibold text-slate-900">Guest History</h3>
-                        </div>
-                        <div className="space-y-2">
-                            {myRequests.length === 0 ? (
-                                <p className="text-slate-400 text-sm">No recent guest requests.</p>
-                            ) : (
-                                myRequests.slice(0, 3).map(req => (
-                                    <div key={req._id} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg text-sm">
-                                        <div>
-                                            <span className="font-semibold text-slate-700">{req.guest_name}</span>
-                                            <span className="text-slate-500 text-xs ml-2">({new Date(req.fromDate).toLocaleDateString()})</span>
-                                        </div>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                                            req.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                                                'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                            {req.status}
-                                        </span>
+                {/* Guest History */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-heading font-semibold text-slate-900">Guest History</h3>
+                    </div>
+                    <div className="space-y-2">
+                        {myRequests.length === 0 ? (
+                            <p className="text-slate-400 text-sm">No recent guest requests.</p>
+                        ) : (
+                            myRequests.slice(0, 3).map(req => (
+                                <div key={req._id} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg text-sm">
+                                    <div>
+                                        <span className="font-semibold text-slate-700">{req.guest_name}</span>
+                                        <span className="text-slate-500 text-xs ml-2">({new Date(req.fromDate).toLocaleDateString()})</span>
                                     </div>
-                                ))
-                            )}
-                        </div>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                        req.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                            'bg-yellow-100 text-yellow-700'
+                                        }`}>
+                                        {req.status}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Quick Links panel */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                    <h3 className="text-lg font-heading font-semibold text-slate-900 mb-4">Quick Links</h3>
+                    <div className="space-y-3">
+                        <Link to="/tenant/payments" className="flex items-center gap-3 p-3 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors font-medium text-sm">
+                            <CreditCard size={18} />
+                            View Payment History
+                        </Link>
+                        <Link to="/tenant/complaints" className="flex items-center gap-3 p-3 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors font-medium text-sm">
+                            <AlertCircle size={18} />
+                            My Complaints
+                        </Link>
+                        <Link to="/tenant/food" className="flex items-center gap-3 p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm">
+                            <Megaphone size={18} />
+                            Food & Menu
+                        </Link>
                     </div>
                 </div>
             </div>
 
-            {/* Guest Modal */}
-            {showGuestModal && (
-                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-100">
-                        <h2 className="text-xl font-heading font-bold text-slate-900 mb-4">Request Overnight Guest</h2>
-                        <form onSubmit={handleRequestGuest} className="space-y-4">
-                            <Input label="Guest Name" required value={guestData.guest_name} onChange={e => setGuestData({ ...guestData, guest_name: e.target.value })} />
-                            <Input label="Relation" required value={guestData.relation} onChange={e => setGuestData({ ...guestData, relation: e.target.value })} />
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input type="date" label="From" required min={today} value={guestData.fromDate} onChange={e => setGuestData({ ...guestData, fromDate: e.target.value })} />
-                                <Input type="date" label="To" required min={guestData.fromDate || today} value={guestData.toDate} onChange={e => setGuestData({ ...guestData, toDate: e.target.value })} />
-                            </div>
-                            <div className="flex space-x-3 pt-4">
-                                <Button type="button" variant="ghost" className="flex-1" onClick={() => setShowGuestModal(false)}>Cancel</Button>
-                                <Button type="submit" className="flex-1" isLoading={submittingGuest}>Submit</Button>
-                            </div>
-                        </form>
-                    </div>
+            {/* UI-024 FIX: Accessible Modal with focus trap + ARIA */}
+            <Modal
+                isOpen={showGuestModal}
+                onClose={() => setShowGuestModal(false)}
+                title="Request Overnight Guest"
+            >
+                <div className="p-6">
+                    <h2 className="text-xl font-heading font-bold text-slate-900 mb-4">Request Overnight Guest</h2>
+                    <form onSubmit={handleRequestGuest} className="space-y-4">
+                        <Input label="Guest Name" required value={guestData.guest_name} onChange={e => setGuestData({ ...guestData, guest_name: e.target.value })} />
+                        <Input label="Relation" required value={guestData.relation} onChange={e => setGuestData({ ...guestData, relation: e.target.value })} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input type="date" label="From" required min={today} value={guestData.fromDate} onChange={e => setGuestData({ ...guestData, fromDate: e.target.value })} />
+                            <Input type="date" label="To" required min={guestData.fromDate || today} value={guestData.toDate} onChange={e => setGuestData({ ...guestData, toDate: e.target.value })} />
+                        </div>
+                        <div className="flex space-x-3 pt-4">
+                            <Button type="button" variant="ghost" className="flex-1" onClick={() => setShowGuestModal(false)}>Cancel</Button>
+                            <Button type="submit" className="flex-1" isLoading={submittingGuest}>Submit</Button>
+                        </div>
+                    </form>
                 </div>
-            )}
+            </Modal>
         </div>
     );
 };

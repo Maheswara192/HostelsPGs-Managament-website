@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
+const hpp = require('hpp');
 
 // Routes Import
 const authRoutes = require('./routes/auth.routes');
@@ -21,6 +22,10 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 const app = express();
+
+// Trust Proxy (Required for Render/Vercel/Nginx to get correct client IP for rate limiting)
+app.set('trust proxy', 1);
+
 const trackingMiddleware = require('./middlewares/tracking.middleware');
 
 app.use(trackingMiddleware);
@@ -51,20 +56,25 @@ app.use(cors({
 
 // Security Middleware (Skip in Test to avoid supertest mock conflicts)
 if (process.env.NODE_ENV !== 'test') {
+    // 1. Set Security HTTP Headers
     app.use(helmet());
 
-    // Wrap mongoSanitize to prevent "Cannot set property query" error on some envs
-    // Wrap mongoSanitize to prevent "Cannot set property query" error on some envs
-    // app.use((req, res, next) => {
-    //     try {
-    //         mongoSanitize()(req, res, next);
-    //     } catch (error) {
-    //         console.warn("⚠️ MongoSanitize skipped due to error:", error.message);
-    //         next();
-    //     }
-    // });
+    // 2. Data Sanitization against NoSQL Query Injection
+    // CRITICAL: express-mongo-sanitize 2.2.0 is incompatible with Express 5 getters.
+    // app.use(mongoSanitize());
 
+    // 3. Data Sanitization against XSS
+    // xss-clean is incompatible with Express 5 getters. 
+    // We rely on Helmet and frontend sanitization for now.
     // app.use(xss());
+    
+    // 4. Prevent HTTP Parameter Pollution
+    // hpp is compatible if used directly
+    app.use(hpp({
+        whitelist: [
+            'price', 'rating', 'role', 'status', 'limit', 'page'
+        ]
+    }));
 }
 
 // Rate Limiting

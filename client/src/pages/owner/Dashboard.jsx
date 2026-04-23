@@ -190,8 +190,8 @@ const OwnerDashboard = () => {
                             Your data is encrypted and backed up. Last backup was 2 hours ago.
                         </p>
                     </div>
-                    <button className="mt-6 w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors backdrop-blur-sm border border-white/10">
-                        View Audit Logs
+                    <button onClick={() => navigate('/owner/expenses')} className="mt-6 w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors backdrop-blur-sm border border-white/10">
+                        View Financials
                     </button>
                 </div>
             </div>

@@ -171,6 +171,44 @@ const Home = () => {
                                 <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/5 to-transparent pointer-events-none transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-1000" />
                             </div>
                         </motion.div>
+
+                        {/* UI-007 FIX: Mobile/Tablet Hero Visual — shown below lg breakpoint */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.3 }}
+                            className="lg:hidden w-full mt-12"
+                        >
+                            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                                {[
+                                    { value: '142', label: 'Active Tenants', color: 'from-blue-500 to-blue-600', icon: '👥' },
+                                    { value: '₹4.2L', label: 'Monthly Rev', color: 'from-emerald-500 to-emerald-600', icon: '💰' },
+                                    { value: '98%', label: 'Occupancy', color: 'from-purple-500 to-purple-600', icon: '🏠' },
+                                ].map((stat, i) => (
+                                    <div key={i} className="relative p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md text-center overflow-hidden group">
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
+                                        <div className="text-2xl mb-2">{stat.icon}</div>
+                                        <div className="text-xl sm:text-2xl font-bold text-white mb-1 relative z-10">{stat.value}</div>
+                                        <div className="text-[10px] sm:text-xs text-slate-400 font-medium uppercase tracking-wider relative z-10">{stat.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm text-slate-300 font-medium">Revenue Trend</span>
+                                    <span className="text-xs text-emerald-400 font-semibold">↑ 12%</span>
+                                </div>
+                                <div className="flex items-end justify-between gap-1.5 h-16">
+                                    {[40, 60, 45, 80, 55, 90, 65, 85, 70, 95].map((h, i) => (
+                                        <div
+                                            key={i}
+                                            className="w-full bg-gradient-to-t from-primary-600 to-primary-400 rounded-t-sm opacity-80 hover:opacity-100 transition-opacity"
+                                            style={{ height: `${h}%` }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
             </section>

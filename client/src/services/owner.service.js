@@ -125,7 +125,7 @@ const ownerService = {
     },
 
     recordManualPayment: async (paymentData) => {
-        const response = await api.post('/api/payments/manual', paymentData);
+        const response = await api.post('/payments/manual', paymentData);
         return response.data;
     },
 

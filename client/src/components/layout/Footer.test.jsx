@@ -6,7 +6,7 @@ import Footer from './Footer';
 describe('Footer Component', () => {
     it('renders footer content', () => {
         render(<Footer />);
-        expect(screen.getByText('HostelMate')).toBeInTheDocument();
+        expect(screen.getByText('StayManager')).toBeInTheDocument();
         expect(screen.getByText('Product')).toBeInTheDocument();
         expect(screen.getByText('Company')).toBeInTheDocument();
         expect(screen.getByText('Contact Us')).toBeInTheDocument();

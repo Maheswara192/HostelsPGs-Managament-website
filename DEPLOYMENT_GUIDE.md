@@ -1,112 +1,45 @@
-# 🚀 Deployment Guide: Hostels SaaS Application
+# DevOps & Deployment Guide
 
-This guide will walk you through deploying your MERN stack application.
-
-**Architecture:**
-- **Frontend**: Vercel (Free & Fast)
-- **Backend**: Render (Good Free Tier)
-- **Database**: MongoDB Atlas (Already set up)
+This guide ensures a flawless production deployment across **Render (Backend)** and **Vercel (Frontend)**, explicitly addressing common pitfalls like CORS Blocks, 404 Refresh errors, and API Base URL disconnections.
 
 ---
 
-## ✅ Phase 1: Preparation
+## 1. Backend Deployment (Render)
 
-### 1. Verification
-Ensure your code is pushed to GitHub (you've already done this!).
-
-### 2. Deployment Credentials
-Gather these values (refer to your `SECURITY_GUIDE.md`):
-- `MONGODB_URI` (Production Connection String)
-- `JWT_SECRET` (Use a strong, long secret)
-- `RAZORPAY_KEY_ID` & `SECRET` (Live keys)
-- `SMTP_EMAIL` & `PASSWORD`
-
----
-
-## 🛠️ Phase 2: Backend Deployment (Render)
-
-We will deploy the Node.js server first because the Frontend needs the live Server URL.
-
-1. **Sign Up**: Go to [Render.com](https://render.com) and sign up with GitHub.
-2. **Create New Web Service**:
-   - Click **"New +"** -> **"Web Service"**.
-   - Select your repository (`hostel-management-saas` or whatever you named it).
-   - Click **"Connect"**.
-
-3. **Configure Service**:
-   - **Name**: `hostel-backend` (or unique name)
-   - **Region**: Choose closest to you (e.g., Singapore/Ohio)
-   - **Branch**: `main`
-   - **Root Directory**: `server` (Important!)
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Instance Type**: Free
-
-4. **Environment Variables** (Click "Advanced" or "Environment"):
-   Add the following keys and your production values:
+1. Connect your GitHub repository to Render and create a **Web Service**.
+2. **Settings**:
+   - Build Command: `npm install` (Because your Dockerfile Stage 1 already runs `npm ci` if deploying via Docker, but if native: `cd server && npm install`)
+   - Start Command: `cd server && npm start`
+   - *Better yet, deploy using the Docker runtime! Render natively detects your `server/Dockerfile` if configured.*
+3. **Environment Variables**:
+   You MUST specify these perfectly to avoid CORS and Authentication errors:
    - `NODE_ENV`: `production`
-   - `MONGODB_URI`: `your_mongodb_connection_string`
-   - `JWT_SECRET`: `your_secure_secret`
-   - `RAZORPAY_KEY_ID`: `your_live_key`
-   - `RAZORPAY_KEY_SECRET`: `your_live_secret`
-   - `SMTP_EMAIL`: `your_email`
-   - `SMTP_PASSWORD`: `your_app_password`
-   - `WHATSAPP_API_TOKEN`: `your_token`
+   - `PORT`: `5000`
+   - `JWT_SECRET`: Generate a highly secure random string.
+   - `MONGODB_URI`: Your production Mongo Atlas connection string.
+   - `ALLOWED_ORIGINS`: `https://your-frontend-project.vercel.app` (CRITICAL: Do NOT include a trailing slash `/`).
 
-5. **Deploy**:
-   - Click **"Create Web Service"**.
-   - Wait for the deployment to finish (~5-10 mins).
-   - **Copy the Service URL** (e.g., `https://hostel-backend.onrender.com`).
-   - ⚠️ **Note**: The free tier "sleeps" after inactivity. First request might take 50s.
+> [!CAUTION]
+> If `ALLOWED_ORIGINS` does not strictly match your live Vercel domain, the backend will block all Vercel traffic instantly.
 
 ---
 
-## 🎨 Phase 3: Frontend Deployment (Vercel)
+## 2. Frontend Deployment (Vercel)
 
-Now that the backend is live, let's deploy the React frontend.
-
-1. **Sign Up**: Go to [Vercel.com](https://vercel.com) and sign up with GitHub.
-2. **Import Project**:
-   - Click **"Add New..."** -> **"Project"**.
-   - Import your repository.
-
-3. **Configure Project**:
-   - **Framework Preset**: Vite (should be auto-detected)
-   - **Root Directory**: Click "Edit" and select `client` folder.
-   
-4. **Environment Variables**:
-   - Key: `VITE_API_URL`
-   - Value: `https://your-backend-url.onrender.com/api` (Paste the Render URL from Phase 2 and add `/api` at the end)
-
-5. **Deploy**:
-   - Click **"Deploy"**.
-   - Vercel will build and assign a domain (e.g., `hostel-saas.vercel.app`).
+1. Connect your GitHub repository to Vercel and create a New Project.
+2. **Project Settings (Critical)**:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `client` (Do NOT leave this as the repository root, you must point it into the `client` folder).
+3. **Environment Variables**:
+   - `VITE_API_URL`: `https://your-backend-api.onrender.com/api` (CRITICAL: Must point exactly to your Render deployment).
+4. **Solving the 404 Refresh Error**:
+   - Because you set the Root Directory to `client`, Vercel automatically natively parses `client/vercel.json`.
+   - The file automatically catches any sub-route paths like `/owner/dashboard` and "rewrites" it to `/index.html`, allowing React Router to correctly render the component instead of throwing a 404 Not Found error.
 
 ---
 
-## 🔗 Phase 4: Final Connection
+## 3. Docker Optimizations Implemented
 
-1. **Verify Backend CORS** (Optional but Good):
-   - Currently, your server allows ALL origins (`cors()`), so it should work immediately.
-   - For better security later, update `server/src/app.js` to only allow your Vercel domain.
-
-2. **Test the Live App**:
-   - Open your Vercel URL.
-   - Try to Register/Login.
-   - Note: If using Render Free Tier, the first login attempt might be slow as the server wakes up.
-
----
-
-## 🔄 Deployment Checklist
-
-- [ ] Backend deployed on Render
-- [ ] Environment variables set in Render
-- [ ] Frontend deployed on Vercel
-- [ ] VITE_API_URL set in Vercel
-- [ ] Database connected
-- [ ] Test Login/Registration flow
-
----
-
-Let me know if you run into any errors during these steps!
+Both backend and frontend now employ **Multi-Stage Builds**:
+- **Drastically Reduced Size**: `server` strips caching, DevDeps, and Python build tools. `client` strips Node.js entirely and serves exclusively via `nginx:alpine`, reducing container footprint by nearly 85%.
+- **Locally Run**: `docker-compose up --build` will now automatically parse your `VITE_API_URL` as an `ARG` inside the unified `docker-compose.yml` boot sequence.

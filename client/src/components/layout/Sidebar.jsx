@@ -14,7 +14,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 return [
                     { to: '/admin', icon: <LayoutDashboard size={20} />, label: 'Overview', end: true },
                     { to: '/admin/pgs', icon: <Building2 size={20} />, label: 'All PGs' },
-                    { to: '/admin/users', icon: <Users size={20} />, label: 'User Management' },
                     { to: '/admin/logs', icon: <FileText size={20} />, label: 'Audit Logs' },
                 ];
             case 'owner':
@@ -35,7 +34,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             case 'tenant':
                 return [
                     { to: '/tenant', icon: <LayoutDashboard size={20} />, label: 'My Room', end: true },
-                    { to: '/tenant/pay', icon: <FileText size={20} />, label: 'Payments' },
+                    { to: '/tenant/payments', icon: <FileText size={20} />, label: 'Payments' },
                     { to: '/tenant/complaints', icon: <Bell size={20} />, label: 'My Complaints' },
                     { to: '/tenant/food', icon: <Utensils size={20} />, label: 'Food & Menu' },
                 ];

@@ -35,10 +35,10 @@ const initSocket = (httpServer) => {
         socket.join(`user_${socket.user.id}`);
 
         // Join PG Room (if Owner or Tenant)
-        // Since payload only has ID/Role, we might need pg_id if trusted,
-        // OR we trust the client to emit 'join_pg' with validation?
-        // Better: client emits 'join_pg', we validate if they belong to it?
-        // For now, let's keep it simple: Controller emits to `user_<id>` or we handle basic rooms here.
+        if (socket.user.pg_id) {
+            console.log(`🏢 User ${socket.user.id} joining room: pg_${socket.user.pg_id}`);
+            socket.join(`pg_${socket.user.pg_id}`);
+        }
 
         socket.on('disconnect', () => {
             console.log(`❌ Socket Disconnected: ${socket.user.id}`);

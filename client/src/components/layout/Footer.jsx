@@ -9,7 +9,7 @@ const Footer = () => {
                     {/* Brand */}
                     <div className="col-span-1 md:col-span-1">
                         <div className="flex items-center space-x-2 mb-4 text-white">
-                            <Building2 size={32} className="text-primary-light" />
+                            <Building2 size={32} className="text-primary-400" />
                             <span className="text-2xl font-bold">StayManager</span>
                         </div>
                         <p className="text-slate-400 mb-6">Simplifying hostel and PG management with modern technology.</p>
@@ -25,10 +25,10 @@ const Footer = () => {
                     <div>
                         <h3 className="text-white font-semibold mb-4 text-lg">Product</h3>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:text-primary-light transition-colors">Features</a></li>
-                            <li><a href="#" className="hover:text-primary-light transition-colors">Pricing</a></li>
-                            <li><a href="#" className="hover:text-primary-light transition-colors">Testimonials</a></li>
-                            <li><a href="#" className="hover:text-primary-light transition-colors">FAQ</a></li>
+                            <li><a href="#" className="hover:text-primary-400 transition-colors">Features</a></li>
+                            <li><a href="#" className="hover:text-primary-400 transition-colors">Pricing</a></li>
+                            <li><a href="#" className="hover:text-primary-400 transition-colors">Testimonials</a></li>
+                            <li><a href="#" className="hover:text-primary-400 transition-colors">FAQ</a></li>
                         </ul>
                     </div>
 
@@ -36,10 +36,10 @@ const Footer = () => {
                     <div>
                         <h3 className="text-white font-semibold mb-4 text-lg">Company</h3>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:text-primary-light transition-colors">About Us</a></li>
-                            <li><a href="#" className="hover:text-primary-light transition-colors">Careers</a></li>
-                            <li><a href="#" className="hover:text-primary-light transition-colors">Blog</a></li>
-                            <li><a href="#" className="hover:text-primary-light transition-colors">Contact</a></li>
+                            <li><a href="#" className="hover:text-primary-400 transition-colors">About Us</a></li>
+                            <li><a href="#" className="hover:text-primary-400 transition-colors">Careers</a></li>
+                            <li><a href="#" className="hover:text-primary-400 transition-colors">Blog</a></li>
+                            <li><a href="#" className="hover:text-primary-400 transition-colors">Contact</a></li>
                         </ul>
                     </div>
 
@@ -48,15 +48,15 @@ const Footer = () => {
                         <h3 className="text-white font-semibold mb-4 text-lg">Contact Us</h3>
                         <ul className="space-y-3">
                             <li className="flex items-center space-x-3">
-                                <Mail size={18} className="text-primary-light" />
+                                <Mail size={18} className="text-primary-400" />
                                 <span>support@staymanager.com</span>
                             </li>
                             <li className="flex items-center space-x-3">
-                                <Phone size={18} className="text-primary-light" />
+                                <Phone size={18} className="text-primary-400" />
                                 <span>+91 7675857684</span>
                             </li>
                             <li className="flex items-center space-x-3">
-                                <MapPin size={18} className="text-primary-light" />
+                                <MapPin size={18} className="text-primary-400" />
                                 <span>Hyderabad,Telangana</span>
                             </li>
                         </ul>
@@ -65,7 +65,7 @@ const Footer = () => {
 
                 <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center bg-slate-900">
                     <p className="text-slate-500 text-sm">
-                        © 2026 <a href="https://staymanager.cloud" className="text-primary-light hover:text-white transition-colors">staymanager.cloud</a>. All rights reserved.
+                        © 2026 <a href="https://staymanager.cloud" className="text-primary-400 hover:text-white transition-colors">staymanager.cloud</a>. All rights reserved.
                     </p>
                     <div className="flex space-x-6 mt-4 md:mt-0 text-sm">
                         <a href="#" className="text-slate-500 hover:text-white transition-colors">Privacy Policy</a>

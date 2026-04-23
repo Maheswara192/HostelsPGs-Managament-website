@@ -122,14 +122,17 @@ To explore the platform without touching the database, please use the seeded cre
 
 *Note: The platform is pre-seeded with 1 PG, 10 Rooms, and 5 Tenants for immediate testing on `docker-compose up`.*
 
-### 📸 Screenshots
-*(Replace these links with actual image assets or GIFs inside the `docs/` folder)*
-- 🖼 Server Dashboard `[Your Image URL/Path Here]`
-- 🖼 Razorpay Checkout Flow `[Your Image URL/Path Here]`
-- 🖼 Mobile Responsive Tenant View `[Your Image URL/Path Here]`
+### 📸 Application Interface Previews
+*(Beautifully scaled for both Desktop and Mobile experiences)*
 
-### 🎥 Demo Video
-🔗 Watch the complete product teardown on YouTube: **[Link to Demo Video]**
+#### Property Administrator Dashboard
+![Property Admin Dashboard](./assets/pg_admin_dashboard.png)
+
+#### Tenant Management Portal (Mobile View)
+![Tenant Mobile View](./assets/tenant_mobile_portal.png)
+
+### 🎥 Live Demonstration
+🔗 Watch the complete product deployment tear-down & architecture review on YouTube: **[Demo Video URL Placeholder]**
 
 ---
 

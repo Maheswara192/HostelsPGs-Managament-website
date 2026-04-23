@@ -67,7 +67,7 @@ exports.register = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 pg_id: user.pg_id,
-                token: generateToken(user._id),
+                token: generateToken(user),
             },
         });
     } catch (error) {
@@ -116,7 +116,7 @@ exports.login = async (req, res) => {
                     role: user.role,
                     pg_id: user.pg_id,
                     mustChangePassword: user.mustChangePassword,
-                    token: generateToken(user._id),
+                    token: generateToken(user),
                 },
             });
 
@@ -171,11 +171,13 @@ exports.forgotPassword = async (req, res) => {
         // Check if user exists in database
         const user = await User.findOne({ email: email.toLowerCase().trim() });
 
+        // BUG-004 FIX: Always return same response regardless of user existence
+        // Prevents attacker from enumerating valid email addresses
         if (!user) {
             console.log(`⚠️ Password reset attempted for non-existent email: ${email}`);
-            return res.status(404).json({
-                success: false,
-                message: 'No account found with this email address. Please check and try again.'
+            return res.json({
+                success: true,
+                message: 'If this email is registered, you will receive an OTP shortly.'
             });
         }
 
@@ -187,35 +189,32 @@ exports.forgotPassword = async (req, res) => {
         user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
         await user.save();
 
-        console.log('==================================================');
-        console.log(`🔐 PASSWORD RESET REQUEST for: ${email}`);
-        console.log(`📧 OTP Generated: ${otp}`);
-        console.log(`⏰ Valid until: ${new Date(user.resetPasswordExpires).toLocaleString()}`);
-        console.log('==================================================');
+        // BUG-003 FIX: Only log OTP in non-production environments
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('==================================================');
+            console.log(`🔐 PASSWORD RESET REQUEST for: ${email}`);
+            console.log(`📧 OTP Generated: ${otp}`);
+            console.log(`⏰ Valid until: ${new Date(user.resetPasswordExpires).toLocaleString()}`);
+            console.log('==================================================');
+        }
 
         // Send OTP via BullMQ Worker
         try {
             const { enqueueEmail } = require('../workers/email.worker');
             await enqueueEmail('sendOTP', { email: user.email, otp });
 
-            if (true) { // Assume enqueued successfully
-                console.log(`✅ OTP email sent successfully to ${email}`);
-                return res.json({
-                    success: true,
-                    message: 'OTP sent to your email. Please check your inbox.'
-                });
-            }
+            console.log(`✅ OTP email enqueued for ${email}`);
         } catch (emailError) {
             console.error('❌ Email sending failed:', emailError.message);
-            console.log(`⚠️ OTP for ${email}: ${otp} (Check server logs)`);
+            if (process.env.NODE_ENV !== 'production') {
+                console.log(`⚠️ OTP for ${email}: ${otp} (Check server logs)`);
+            }
         }
 
-        // If email fails, still return success but with a note
-        // The OTP is logged in console for development/testing
+        // Always return generic success to prevent user enumeration
         res.json({
             success: true,
-            message: 'OTP generated. Please check server logs or contact administrator.',
-            devNote: process.env.NODE_ENV !== 'production' ? `OTP: ${otp}` : undefined
+            message: 'If this email is registered, you will receive an OTP shortly.'
         });
 
     } catch (error) {
@@ -318,7 +317,7 @@ exports.setupAccount = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 pg_id: user.pg_id,
-                token: generateToken(user._id),
+                token: generateToken(user),
             },
             message: 'Account setup successful'
         });
@@ -366,9 +365,35 @@ exports.changePassword = async (req, res) => {
         user.mustChangePassword = false;
         await user.save();
 
+        // BUG-002 FIX: Invalidate Redis session cache so old tokens re-fetch from DB
+        try {
+            const redis = require('../config/redis');
+            await redis.del(`session:${req.user.id || req.user._id}`);
+        } catch (cacheError) {
+            console.warn('Cache invalidation failed:', cacheError.message);
+        }
+
         res.json({ success: true, message: 'Password updated successfully' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+
+// @desc    Logout user & invalidate token cache
+// @route   POST /api/auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+    try {
+        const redis = require('../config/redis');
+        const cacheKey = `session:${req.user._id || req.user.id}`;
+        
+        await redis.del(cacheKey);
+        
+        res.status(200).json({ success: true, message: 'Successfully logged out' });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ success: false, message: 'Server Error during logout' });
+    }
+};
+

@@ -26,21 +26,22 @@ exports.getDashboard = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Tenant record not found' });
         }
 
-        // Get recent payments
-        const payments = await Payment.find({ tenant_id: tenant._id })
-            .sort({ transaction_date: -1 })
-            .limit(5);
-
-        // Get recent complaints
-        const complaints = await Complaint.find({ tenant_id: tenant._id })
-            .sort({ createdAt: -1 })
-            .limit(5);
-
-        // Get Last Cleaned Status
-        const lastCleaned = await HousekeepingLog.findOne({
-            room_id: tenant.room_id,
-            status: 'Cleaned'
-        }).sort({ date: -1 });
+        // Get recent data in parallel
+        const [payments, complaints, lastCleaned] = await Promise.all([
+            // 1. Recent payments
+            Payment.find({ tenant_id: tenant._id })
+                .sort({ transaction_date: -1 })
+                .limit(5),
+            // 2. Recent complaints
+            Complaint.find({ tenant_id: tenant._id })
+                .sort({ createdAt: -1 })
+                .limit(5),
+            // 3. Last Cleaned Status
+            HousekeepingLog.findOne({
+                room_id: tenant.room_id,
+                status: 'Cleaned'
+            }).sort({ date: -1 })
+        ]);
 
         res.json({
             success: true,
@@ -106,27 +107,31 @@ exports.verifyPayment = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
+        // BUG-019 FIX: Verify the payment belongs to this tenant before updating
+        const payment = await Payment.findOne({ gateway_order_id: razorpay_order_id });
+        if (!payment) {
+            return res.status(404).json({ success: false, message: 'Payment not found' });
+        }
+
+        // Ownership check: payment.user_id must match requesting user
+        const userId = (req.user._id || req.user.id).toString();
+        if (payment.user_id.toString() !== userId) {
+            return res.status(403).json({ success: false, message: 'Not authorized to verify this payment' });
+        }
+
         const isValid = paymentService.verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
 
         if (isValid) {
-            await Payment.findOneAndUpdate(
-                { gateway_order_id: razorpay_order_id },
-                {
-                    status: 'SUCCESS',
-                    gateway_payment_id: razorpay_payment_id,
-                    gateway_signature: razorpay_signature,
-                    transaction_date: Date.now()
-                }
-            );
-
-            // TODO: Update Tenant rent status if needed (e.g., set month as Paid)
+            payment.status = 'SUCCESS';
+            payment.gateway_payment_id = razorpay_payment_id;
+            payment.gateway_signature = razorpay_signature;
+            payment.transaction_date = Date.now();
+            await payment.save();
 
             res.json({ success: true, message: 'Payment verified successfully' });
         } else {
-            await Payment.findOneAndUpdate(
-                { gateway_order_id: razorpay_order_id },
-                { status: 'FAILED' }
-            );
+            payment.status = 'FAILED';
+            await payment.save();
             res.status(400).json({ success: false, message: 'Invalid signature' });
         }
     } catch (error) {

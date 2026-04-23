@@ -14,7 +14,7 @@ describe('Unit: generateToken Utility', () => {
         expect(decoded.id).toBe(userId);
     });
 
-    it('should set expiration to 30 days', () => {
+    it('should set expiration to 24 hours', () => {
         const userId = 'user123';
         const token = generateToken(userId);
         const decoded = jwt.decode(token);

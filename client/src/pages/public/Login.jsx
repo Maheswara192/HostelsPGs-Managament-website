@@ -13,8 +13,9 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const { login } = useAuth();
+    const { login, logout } = useAuth();
     const navigate = useNavigate();
+    const portalLabel = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -26,6 +27,12 @@ const Login = () => {
 
             if (result.success) {
                 const userRole = result.role;
+                if (userRole !== activeTab) {
+                    logout();
+                    setError(`This account belongs to the ${userRole} portal. Please switch tabs and try again.`);
+                    return;
+                }
+
                 switch (userRole) {
                     case 'admin': navigate('/admin'); break;
                     case 'owner': navigate('/owner'); break;
@@ -94,7 +101,7 @@ const Login = () => {
 
                     <form className="space-y-6" onSubmit={handleLogin}>
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/50 backdrop-blur-sm text-red-600 px-4 py-3 rounded-xl text-sm text-center animate-fade-in">
+                            <div className="bg-red-500/10 border border-red-500/50 backdrop-blur-sm text-red-400 px-4 py-3 rounded-xl text-sm text-center animate-fade-in">
                                 {error}
                             </div>
                         )}
@@ -131,7 +138,7 @@ const Login = () => {
                         </div>
 
                         <Button type="submit" variant="primary" className="w-full text-lg py-3 mt-4" isLoading={isLoading}>
-                            Sign In to {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Portal
+                            Sign In to {portalLabel} Portal
                         </Button>
                     </form>
 

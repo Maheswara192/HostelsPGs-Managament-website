@@ -1,5 +1,4 @@
 const { Queue, Worker } = require('bullmq');
-const { sendOTP, sendAccountSetupEmail } = require('../services/email.service');
 const logger = require('../utils/logger');
 const redisInstance = require('../config/redis');
 
@@ -10,13 +9,15 @@ const connection = {
     maxRetriesPerRequest: null // Required specifically for BullMQ
 };
 
+const redisEnabled = !redisInstance.isDisabled;
+
 // Create the Email Queue
-const emailQueue = new Queue('email-queue', { connection });
+const emailQueue = redisEnabled ? new Queue('email-queue', { connection }) : null;
 
 // Optional Wrapper to gracefully handle enqueuing if Redis isn't up
 const enqueueEmail = async (jobName, data) => {
     try {
-        if (!redisInstance.isConnected) {
+        if (!redisEnabled || !redisInstance.isConnected) {
             logger.warn(`Redis disconnected. Executing Email Job [${jobName}] synchronously as fallback.`);
             await processJobDirectly({ name: jobName, data });
             return;
@@ -31,25 +32,35 @@ const enqueueEmail = async (jobName, data) => {
 };
 
 // Background Worker Processor
-const worker = new Worker('email-queue', async job => {
+const worker = redisEnabled ? new Worker('email-queue', async job => {
     logger.info(`Processing Background Job: ${job.name} (Job ID: ${job.id})`);
     await processJobDirectly(job);
-}, { connection });
+}, { connection }) : null;
 
-worker.on('completed', job => {
-    logger.info(`Completed Background Job: ${job.name} (Job ID: ${job.id})`);
-});
+if (worker) {
+    worker.on('completed', job => {
+        logger.info(`Completed Background Job: ${job.name} (Job ID: ${job.id})`);
+    });
 
-worker.on('failed', (job, err) => {
-    logger.error(`Failed Background Job: ${job.name} (Job ID: ${job.id}) | Reason: ${err.message}`);
-});
+    worker.on('failed', (job, err) => {
+        logger.error(`Failed Background Job: ${job.name} (Job ID: ${job.id}) | Reason: ${err.message}`);
+    });
+}
 
 // Fallback executor for synchronous processing if queue fails
 async function processJobDirectly(job) {
+    const emailService = require('../services/email.service');
+
     if (job.name === 'sendOTP') {
-        await sendOTP(job.data.email, job.data.otp);
+        await emailService.sendOTP(job.data.email, job.data.otp);
     } else if (job.name === 'sendSetupEmail') {
-        await sendAccountSetupEmail(job.data.email, job.data.name, job.data.token, job.data.pgName);
+        await emailService.sendAccountSetupEmail(
+            job.data.email,
+            job.data.name,
+            job.data.token,
+            job.data.pgName,
+            job.data.lang || 'en'
+        );
     } else {
         logger.warn(`Unknown email job type: ${job.name}`);
     }

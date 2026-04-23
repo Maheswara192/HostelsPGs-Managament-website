@@ -12,11 +12,15 @@ const mockRazorpay = {
     open: vi.fn(),
     on: vi.fn(),
 };
-window.Razorpay = vi.fn(() => mockRazorpay);
+window.Razorpay = vi.fn(function MockRazorpay() {
+    return mockRazorpay;
+});
 
 describe('Tenant Payments Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        window.alert.mockClear();
+        window.confirm.mockReturnValue(true);
     });
 
     const mockPaymentsDetails = {
@@ -43,7 +47,7 @@ describe('Tenant Payments Component', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText('₹5000')).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: '₹5000' })).toBeInTheDocument();
             expect(screen.getByText('order_123')).toBeInTheDocument();
             expect(screen.getByText('SUCCESS')).toBeInTheDocument();
         });
@@ -64,13 +68,13 @@ describe('Tenant Payments Component', () => {
             </BrowserRouter>
         );
 
-        await waitFor(() => screen.getByText('₹5000'));
+        await waitFor(() => screen.getByRole('heading', { name: '₹5000' }));
 
         const payButton = screen.getByText('Pay Rent Now');
         fireEvent.click(payButton);
 
         await waitFor(() => {
-            expect(tenantService.initiateRentPayment).toHaveBeenCalled();
+            expect(tenantService.initiateRentPayment).toHaveBeenCalledTimes(1);
             expect(window.Razorpay).toHaveBeenCalled();
             expect(mockRazorpay.open).toHaveBeenCalled();
         });
@@ -89,7 +93,7 @@ describe('Tenant Payments Component', () => {
             </BrowserRouter>
         );
 
-        await waitFor(() => screen.getByText('₹5000'));
+        await waitFor(() => screen.getByRole('heading', { name: '₹5000' }));
         fireEvent.click(screen.getByText('Pay Rent Now'));
 
         await waitFor(() => {

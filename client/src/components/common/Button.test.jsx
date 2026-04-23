@@ -19,16 +19,16 @@ describe('Button Component', () => {
     it('renders primary variant by default', () => {
         render(<Button>Primary</Button>);
         const button = screen.getByRole('button');
-        expect(button).toHaveClass('bg-primary');
-        expect(button).toHaveClass('text-white');
+        expect(button).toHaveClass('btn-primary');
+        expect(button).toHaveClass('focus:ring-primary-500');
     });
 
     it('renders different variants correctly', () => {
         const { rerender } = render(<Button variant="secondary">Secondary</Button>);
-        expect(screen.getByRole('button')).toHaveClass('bg-white');
+        expect(screen.getByRole('button')).toHaveClass('btn-outline');
 
         rerender(<Button variant="danger">Danger</Button>);
-        expect(screen.getByRole('button')).toHaveClass('bg-red-600');
+        expect(screen.getByRole('button')).toHaveClass('bg-red-500');
 
         rerender(<Button variant="ghost">Ghost</Button>);
         expect(screen.getByRole('button')).toHaveClass('bg-transparent');
@@ -46,13 +46,7 @@ describe('Button Component', () => {
         render(<Button isLoading>Loading</Button>);
         const button = screen.getByRole('button');
         expect(button).toBeDisabled();
-        // Lucide icons usually render as SVGs, checking for a common characteristic or class if possible
-        // Because we mocked or imported Loader2, we check if something with "animate-spin" exists as per component code
-        // The component code: <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        // We can query by generic selector since we don't have an aria-label on the loader
-        // Alternatively, just checking strict disable is a good start, but finding the spinner is better.
-        // Let's assume the DOM structure contains the class.
-        // Note: screen.getByRole('button') contains the loader.
+        expect(button.querySelector('.animate-spin')).toBeTruthy();
     });
 
     it('disables button when disabled prop is true', () => {

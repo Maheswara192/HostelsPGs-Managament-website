@@ -40,4 +40,6 @@ const pgSchema = new mongoose.Schema({
   }
 });
 
+pgSchema.index({ owner_id: 1 });
+
 module.exports = mongoose.model('PG', pgSchema);

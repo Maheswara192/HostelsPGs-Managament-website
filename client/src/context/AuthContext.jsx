@@ -1,6 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import authService from '../services/auth.service';
-import { initSocket, disconnectSocket } from '../services/socket.service';
 
 export const AuthContext = createContext();
 
@@ -10,6 +9,16 @@ export const AuthProvider = ({ children }) => {
 
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const initSocketClient = async (token) => {
+        const { initSocket } = await import('../services/socket.service');
+        initSocket(token);
+    };
+
+    const disconnectSocketClient = async () => {
+        const { disconnectSocket } = await import('../services/socket.service');
+        disconnectSocket();
+    };
 
 
     useEffect(() => {
@@ -21,7 +30,7 @@ export const AuthProvider = ({ children }) => {
                     const response = await authService.getCurrentUser();
                     if (response.success) {
                         setUser(response.data);
-                        initSocket(storedToken); // Connect Socket
+                        await initSocketClient(storedToken);
                     } else {
                         localStorage.removeItem('token');
                     }
@@ -42,7 +51,7 @@ export const AuthProvider = ({ children }) => {
             // Login returns { success: true, data: { ...user, token } }
             if (response.success) {
                 setUser(response.data);
-                initSocket(response.data.token); // Connect Socket
+                await initSocketClient(response.data.token);
                 return { success: true, role: response.data.role };
             }
             return { success: false, message: response.message };
@@ -57,7 +66,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         authService.logout();
         setUser(null);
-        disconnectSocket(); // Disconnect Socket
+        disconnectSocketClient();
     };
 
     const registerOwner = async (name, email, password, pgName) => {
@@ -65,7 +74,7 @@ export const AuthProvider = ({ children }) => {
             const response = await authService.registerOwner(name, email, password, pgName);
             if (response.success) {
                 setUser(response.data);
-                initSocket(response.data.token); // Connect Socket
+                await initSocketClient(response.data.token);
                 return { success: true };
             }
             return { success: false, message: response.message };

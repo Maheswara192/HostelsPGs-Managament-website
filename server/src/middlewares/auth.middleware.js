@@ -28,20 +28,36 @@ const protect = async (req, res, next) => {
                 if (!req.user) {
                     return res.status(401).json({ success: false, message: 'Not authorized, user not found' });
                 }
+
+                // Block suspended/deactivated accounts
+                if (['SUSPENDED', 'DEACTIVATED'].includes(req.user.accountStatus)) {
+                    return res.status(403).json({ success: false, message: 'Account suspended or deactivated. Contact support.' });
+                }
                 
                 // Save to cache for 1 hour (3600 seconds)
                 await redis.setEx(cacheKey, 3600, req.user);
             }
 
-            next();
+            // Enforce password change for temp passwords
+            if (req.user.mustChangePassword) {
+                if (!req.originalUrl.includes('/api/auth/change-password') && !req.originalUrl.includes('/api/auth/logout')) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'You must change your password before accessing the system.',
+                        errorCode: 'MUST_CHANGE_PASSWORD'
+                    });
+                }
+            }
+
+            return next();
         } catch (error) {
             console.error(error);
-            res.status(401).json({ success: false, message: 'Not authorized, token failed' });
+            return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
         }
     }
 
     if (!token) {
-        res.status(401).json({ success: false, message: 'Not authorized, no token' });
+        return res.status(401).json({ success: false, message: 'Not authorized, no token' });
     }
 };
 

@@ -36,8 +36,13 @@ const enforceIsolation = (req, res, next) => {
     if (req.body) {
         req.body.pg_id = req.user.pg_id;
     }
-    // Also set in query for GET requests consistency
-    req.query.pg_id = req.user.pg_id;
+    // Also set in params for consistency and security
+    if (req.params && req.params.pg_id) {
+        if (req.params.pg_id !== req.user.pg_id.toString()) {
+            console.warn(`[SECURITY WARN] User ${req.user._id} tried to manipulate pg_id in params. Overwriting.`);
+        }
+        req.params.pg_id = req.user.pg_id;
+    }
 
     next();
 };

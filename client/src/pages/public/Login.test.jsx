@@ -16,10 +16,11 @@ vi.mock('react-router-dom', async () => {
 
 describe('Login Component', () => {
     const mockLogin = vi.fn();
+    const mockLogout = vi.fn();
 
-    const renderLogin = (role = 'owner') => {
+    const renderLogin = () => {
         render(
-            <AuthContext.Provider value={{ login: mockLogin }}>
+            <AuthContext.Provider value={{ login: mockLogin, logout: mockLogout }}>
                 <BrowserRouter>
                     <Login />
                 </BrowserRouter>
@@ -33,14 +34,20 @@ describe('Login Component', () => {
 
     it('renders login form with default owner tab', () => {
         renderLogin();
-        expect(screen.getByText(/Sign in to your account/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Sign In as Owner/i })).toBeInTheDocument();
+        expect(screen.getByText(/Welcome Back/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Sign In to Owner Portal/i })).toBeInTheDocument();
     });
 
     it('validates input fields', () => {
-        renderLogin();
-        const emailInput = screen.getByLabelText(/Email address/i);
-        const passwordInput = screen.getByLabelText(/Password/i);
+        const { container } = render(
+            <AuthContext.Provider value={{ login: mockLogin, logout: mockLogout }}>
+                <BrowserRouter>
+                    <Login />
+                </BrowserRouter>
+            </AuthContext.Provider>
+        );
+        const emailInput = screen.getByPlaceholderText('you@example.com');
+        const passwordInput = container.querySelector('input[type="password"]');
 
         expect(emailInput).toBeRequired();
         expect(passwordInput).toBeRequired();
@@ -50,9 +57,10 @@ describe('Login Component', () => {
         mockLogin.mockResolvedValue({ success: true, role: 'owner' });
         renderLogin();
 
-        fireEvent.change(screen.getByLabelText(/Email address/i), { target: { value: 'test@example.com' } });
-        fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password' } });
-        fireEvent.click(screen.getByRole('button', { name: /Sign In as Owner/i }));
+        const passwordInput = document.querySelector('input[type="password"]');
+        fireEvent.change(screen.getByPlaceholderText('you@example.com'), { target: { value: 'test@example.com' } });
+        fireEvent.change(passwordInput, { target: { value: 'password' } });
+        fireEvent.click(screen.getByRole('button', { name: /Sign In to Owner Portal/i }));
 
         await waitFor(() => {
             expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password');
@@ -64,12 +72,28 @@ describe('Login Component', () => {
         mockLogin.mockResolvedValue({ success: false, message: 'Invalid credentials' });
         renderLogin();
 
-        fireEvent.change(screen.getByLabelText(/Email address/i), { target: { value: 'test@example.com' } });
-        fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'wrongpass' } });
-        fireEvent.click(screen.getByRole('button', { name: /Sign In as Owner/i }));
+        const passwordInput = document.querySelector('input[type="password"]');
+        fireEvent.change(screen.getByPlaceholderText('you@example.com'), { target: { value: 'test@example.com' } });
+        fireEvent.change(passwordInput, { target: { value: 'wrongpass' } });
+        fireEvent.click(screen.getByRole('button', { name: /Sign In to Owner Portal/i }));
 
         await waitFor(() => {
             expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
+        });
+    });
+
+    it('blocks cross-portal login and logs out the session', async () => {
+        mockLogin.mockResolvedValue({ success: true, role: 'tenant' });
+        renderLogin();
+
+        const passwordInput = document.querySelector('input[type="password"]');
+        fireEvent.change(screen.getByPlaceholderText('you@example.com'), { target: { value: 'tenant@example.com' } });
+        fireEvent.change(passwordInput, { target: { value: 'password' } });
+        fireEvent.click(screen.getByRole('button', { name: /Sign In to Owner Portal/i }));
+
+        await waitFor(() => {
+            expect(mockLogout).toHaveBeenCalled();
+            expect(screen.getByText(/belongs to the tenant portal/i)).toBeInTheDocument();
         });
     });
 });

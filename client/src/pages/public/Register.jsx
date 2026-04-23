@@ -78,7 +78,7 @@ const Register = () => {
 
                     <form className="space-y-6" onSubmit={handleRegister}>
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/50 backdrop-blur-sm text-red-600 px-4 py-3 rounded-xl text-sm text-center animate-fade-in">
+                            <div className="bg-red-500/10 border border-red-500/50 backdrop-blur-sm text-red-400 px-4 py-3 rounded-xl text-sm text-center animate-fade-in">
                                 {error}
                             </div>
                         )}

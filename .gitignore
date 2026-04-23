@@ -17,6 +17,10 @@ test_results*.json
 # Uploads
 uploads/*
 !uploads/.gitkeep
+server/uploads/*
+!server/uploads/.gitkeep
+!server/uploads/id_proofs/
+!server/uploads/id_proofs/.gitkeep
 
 # Backups
 backups/

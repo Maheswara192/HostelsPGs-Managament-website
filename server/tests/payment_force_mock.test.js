@@ -7,32 +7,56 @@ const mongoose = require('mongoose');
 const app = require('../src/app');
 const User = require('../src/models/User');
 const Payment = require('../src/models/Payment');
+const PG = require('../src/models/PG');
+const Room = require('../src/models/Room');
+const Tenant = require('../src/models/Tenant');
 const paymentService = require('../src/services/payment.service');
 const crypto = require('crypto');
+const dbHandler = require('./utils/db-handler');
 
 // MOCK DATA
 const TENANT_USER = { name: "Pay Mock Tenant", email: `paymock_${Date.now()}@test.com`, password: "password123", role: "tenant" };
 
 describe('💳 Payment Mock Tests', () => {
     let token, tenantId;
-    let mongod;
 
     beforeAll(async () => {
         try {
-            const { MongoMemoryServer } = require('mongodb-memory-server');
-            mongod = await MongoMemoryServer.create();
-            const testURI = mongod.getUri();
+            await dbHandler.connect();
 
-            if (mongoose.connection.readyState !== 0) await mongoose.connection.close();
-            await mongoose.connect(testURI);
-
-            // Cleanup
             await User.deleteMany({});
 
-            // Setup Tenant
             const res = await request(app).post('/api/auth/register').send(TENANT_USER);
+            const tenantUserId = res.body.data.user ? res.body.data.user._id : res.body.data._id;
             token = res.body.data.token;
-            tenantId = res.body.data.user ? res.body.data.user._id : res.body.data._id;
+
+            const pg = await PG.create({
+                name: 'Payment Mock PG',
+                address: '123 Mock Street',
+                city: 'Mock City',
+                type: 'Both',
+                owner_id: tenantUserId
+            });
+
+            const room = await Room.create({
+                pg_id: pg._id,
+                number: '102',
+                type: 'Single',
+                capacity: 1,
+                price: 5000
+            });
+
+            const tenant = await Tenant.create({
+                user_id: tenantUserId,
+                pg_id: pg._id,
+                room_id: room._id,
+                rentAmount: 5000,
+                contact_number: '9876543210'
+            });
+
+            await User.findByIdAndUpdate(tenantUserId, { pg_id: pg._id });
+
+            tenantId = tenant._id.toString();
         } catch (e) {
             console.error(e);
             throw e;
@@ -40,8 +64,7 @@ describe('💳 Payment Mock Tests', () => {
     });
 
     afterAll(async () => {
-        await mongoose.connection.close();
-        if (mongod) await mongod.stop();
+        await dbHandler.closeDatabase();
     });
 
     let orderId;

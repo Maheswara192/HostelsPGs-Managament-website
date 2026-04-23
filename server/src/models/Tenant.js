@@ -59,7 +59,6 @@ const tenantSchema = new mongoose.Schema({
     exit_request: {
         status: {
             type: String,
-            enum: ['PENDING', 'APPROVED', 'REJECTED'],
             enum: ['PENDING', 'APPROVED', 'REJECTED']
 
         },
@@ -73,5 +72,6 @@ const tenantSchema = new mongoose.Schema({
 
 tenantSchema.index({ pg_id: 1 });
 tenantSchema.index({ pg_id: 1, status: 1 });
+tenantSchema.index({ user_id: 1 }, { unique: true });
 
 module.exports = mongoose.model('Tenant', tenantSchema);

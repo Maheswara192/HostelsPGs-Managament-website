@@ -10,13 +10,17 @@ vi.mock('../../services/owner.service', () => ({
     default: {
         getDashboardStats: vi.fn(),
         getRooms: vi.fn(),
-        getTenants: vi.fn()
+        getTenants: vi.fn(),
+        getPayments: vi.fn()
     }
 }));
 
 // Mock StatsCard to avoid Skeleton issues and simplify assertions
 vi.mock('../../components/common/StatsCard', () => ({
     default: ({ title, value }) => <div data-testid="stats-card">{title}: {value}</div>
+}));
+vi.mock('../../components/charts/RevenueChart', () => ({
+    default: () => <div data-testid="revenue-chart">Revenue Chart</div>
 }));
 
 describe('Owner Dashboard Component', () => {
@@ -48,16 +52,17 @@ describe('Owner Dashboard Component', () => {
 
     it('FETCHES and renders dashboard stats', async () => {
         ownerService.getDashboardStats.mockResolvedValue({ success: true, data: mockStats });
+        ownerService.getPayments.mockResolvedValue({ success: true, data: [] });
 
         renderDashboard();
 
-        expect(screen.getByText(/Welcome back, Test Owner/i)).toBeInTheDocument();
+        expect(screen.getByText(/Overview for/i)).toBeInTheDocument();
 
         await waitFor(() => {
             expect(ownerService.getDashboardStats).toHaveBeenCalled();
+            expect(ownerService.getPayments).toHaveBeenCalled();
             expect(screen.getByText('Pending Rent: ₹15000')).toBeInTheDocument();
             expect(screen.getByText('Total Tenants: 10')).toBeInTheDocument();
-            // New label check
             expect(screen.getByText('Action Items: 2')).toBeInTheDocument();
         });
     });

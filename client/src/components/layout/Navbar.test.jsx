@@ -26,7 +26,7 @@ describe('Navbar Component', () => {
 
     it('renders logo and desktop links', () => {
         renderNavbar();
-        expect(screen.getByText('HostelMate')).toBeInTheDocument();
+        expect(screen.getByAltText('StayManager')).toBeInTheDocument();
         expect(screen.getByText('Home')).toBeInTheDocument();
         expect(screen.getByText('Features')).toBeInTheDocument();
         expect(screen.getByText('Pricing')).toBeInTheDocument();

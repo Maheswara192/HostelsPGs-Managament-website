@@ -49,7 +49,7 @@ const paymentSchema = new mongoose.Schema({
   // Transaction Lifecycle Status
   status: {
     type: String,
-    enum: ['CREATED', 'ATTEMPTED', 'SUCCESS', 'FAILED'],
+    enum: ['CREATED', 'ATTEMPTED', 'SUCCESS', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED'],
     default: 'CREATED'
   },
   // Razorpay Specific Fields
@@ -80,5 +80,6 @@ const paymentSchema = new mongoose.Schema({
 paymentSchema.index({ pg_id: 1 });
 paymentSchema.index({ pg_id: 1, status: 1 });
 paymentSchema.index({ pg_id: 1, transaction_date: -1 });
+paymentSchema.index({ tenant_id: 1 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

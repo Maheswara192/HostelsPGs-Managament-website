@@ -5,7 +5,7 @@ const registerSchema = z.object({
     name: z.string({ required_error: 'Name is required' }).min(2, 'Name must be at least 2 characters'),
     email: z.string({ required_error: 'Email is required' }).email('Invalid email format'),
     password: z.string({ required_error: 'Password is required' }).min(6, 'Password must be at least 6 characters'),
-    role: z.enum(['owner', 'tenant', 'admin'], { required_error: 'Role is required (owner, tenant, or admin)' })
+    role: z.enum(['owner', 'tenant'], { required_error: 'Role is required (owner or tenant)' })
   })
 });
 
@@ -25,8 +25,36 @@ const createPaymentOrderSchema = z.object({
   })
 });
 
+const roomSchema = z.object({
+  body: z.object({
+    roomNumber: z.string({ required_error: 'Room number is required' }).min(1),
+    type: z.enum(['Single', 'Double', 'Triple', 'Dorm'], { required_error: 'Room type is required' }),
+    rent: z.number().min(0, 'Rent cannot be negative'),
+    capacity: z.number().min(1, 'Capacity must be at least 1')
+  })
+});
+
+const expenseSchema = z.object({
+  body: z.object({
+    amount: z.number().min(0, 'Amount must be positive'),
+    category: z.enum(['Electricity', 'Water', 'Maintenance', 'Staff Salary', 'Rent/Lease', 'Internet', 'Food/Groceries', 'Other']),
+    description: z.string().optional()
+  })
+});
+
+const noticeSchema = z.object({
+  body: z.object({
+    title: z.string().min(1, 'Title is required'),
+    message: z.string().min(1, 'Message is required'),
+    type: z.preprocess((val) => (typeof val === 'string' ? val.toUpperCase() : val), z.enum(['GENERAL', 'URGENT', 'MAINTENANCE', 'INFO'])).optional()
+  })
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
-  createPaymentOrderSchema
+  createPaymentOrderSchema,
+  roomSchema,
+  expenseSchema,
+  noticeSchema
 };

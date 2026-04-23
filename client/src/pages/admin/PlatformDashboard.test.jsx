@@ -57,11 +57,14 @@ describe('Admin Dashboard Component', () => {
 
     it('displays error message on fetch failure', async () => {
         adminService.getStats.mockRejectedValue(new Error('Network error'));
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
         render(<AdminDashboard />);
 
         await waitFor(() => {
             expect(screen.getByText('Failed to load dashboard statistics.')).toBeInTheDocument();
         });
+
+        consoleSpy.mockRestore();
     });
 });

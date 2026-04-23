@@ -5,10 +5,14 @@ class RedisClient {
     constructor() {
         this.client = null;
         this.isConnected = false;
+        this.isDisabled = process.env.REDIS_DISABLED === 'true' || process.env.NODE_ENV === 'test';
     }
 
     connect() {
         if (this.client) return this.client;
+        if (this.isDisabled) {
+            return null;
+        }
 
         const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
         
@@ -70,6 +74,6 @@ class RedisClient {
 
 // Export singleton instance
 const redisInstance = new RedisClient();
-redisInstance.connect(); // Start connection asynchronously 
+redisInstance.connect(); // Start connection asynchronously
 
 module.exports = redisInstance;

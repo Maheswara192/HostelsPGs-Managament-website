@@ -54,6 +54,11 @@ const errorHandler = (err, req, res, next) => {
         error = new ApiError(401, 'Your token has expired! Please log in again.');
     }
 
+    // MongoDB Connection Errors
+    if (err.name === 'MongooseServerSelectionError' || err.name === 'MongoNetworkError') {
+        error = new ApiError(503, 'Database connection failed. Our engineers are on it. Please try again later.');
+    }
+
     res.status(error.statusCode).json({
         success: false,
         message: error.message || 'Server Error',
