@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import ownerService from '../../services/owner.service';
 import { Plus, Download, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Skeleton from '../../components/common/Skeleton';
+import { useAuth } from '../../context/AuthContext';
+import { generateRentReceipt } from '../../utils/pdfGenerator';
 
 const Payments = () => {
+    const { user } = useAuth();
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [tenants, setTenants] = useState([]);
@@ -114,7 +117,15 @@ const Payments = () => {
                                             </span>
                                         </td>
                                         <td className="p-4 text-right">
-                                            <button className="text-indigo-600 hover:underline text-xs">Receipt</button>
+                                            {pay.status === 'SUCCESS' && (
+                                                <button
+                                                    onClick={() => generateRentReceipt(pay, user)}
+                                                    className="text-indigo-600 hover:underline text-xs font-semibold"
+                                                    title="Download PDF Receipt"
+                                                >
+                                                    Receipt
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

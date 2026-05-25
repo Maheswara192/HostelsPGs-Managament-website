@@ -31,6 +31,14 @@ const securityService = {
     updateRequestStatus: async (id, status) => {
         const response = await api.put(`/security/guests/${id}/status`, { status });
         return response.data;
+    },
+    getPreAuthVisitors: async () => {
+        const response = await api.get('/security/preauth-visitors');
+        return response.data;
+    },
+    checkInPreAuthVisitor: async (qrCodeToken) => {
+        const response = await api.post('/security/preauth-visitors/check-in', { qrCodeToken });
+        return response.data;
     }
 };
 

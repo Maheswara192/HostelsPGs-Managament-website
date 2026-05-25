@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const MessMenu = require('../models/MessMenu');
 const MessAttendance = require('../models/MessAttendance');
 const Tenant = require('../models/Tenant');
+const MealVoucher = require('../models/MealVoucher');
+const crypto = require('crypto');
 
 // Get Menu (Weekly or Specific Date)
 exports.getMenu = async (req, res) => {
@@ -125,6 +127,120 @@ exports.getMessAnalytics = async (req, res) => {
         res.json({
             date: queryDate,
             stats: analytics
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Purchase Meal Voucher (Tenant Action)
+exports.purchaseVoucher = async (req, res) => {
+    try {
+        const { mealType, price, isGuestVoucher, guestName } = req.body;
+        const tenant = await Tenant.findOne({ user_id: req.user._id || req.user.id });
+
+        if (!tenant) {
+            return res.status(404).json({ success: false, message: 'Tenant profile not found' });
+        }
+
+        // Generate unique cryptographically secure voucher code
+        const voucherCode = 'meal_coup_' + crypto.randomBytes(6).toString('hex');
+
+        const voucher = await MealVoucher.create({
+            pg_id: tenant.pg_id,
+            tenant_id: tenant._id,
+            mealType,
+            price: price || 0,
+            isGuestVoucher: !!isGuestVoucher,
+            guestName: guestName || '',
+            voucherCode
+        });
+
+        res.status(201).json({ success: true, data: voucher });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
+// Get My Meal Vouchers (Tenant Action)
+exports.getMyVouchers = async (req, res) => {
+    try {
+        const tenant = await Tenant.findOne({ user_id: req.user._id || req.user.id });
+        if (!tenant) {
+            return res.status(404).json({ success: false, message: 'Tenant profile not found' });
+        }
+
+        const vouchers = await MealVoucher.find({ tenant_id: tenant._id }).sort({ purchaseDate: -1 });
+        res.json({ success: true, data: vouchers });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
+// Get All Vouchers for PG (Owner Action)
+exports.getVouchersList = async (req, res) => {
+    try {
+        const pg_id = req.user.pg_id;
+        const vouchers = await MealVoucher.find({ pg_id })
+            .populate({
+                path: 'tenant_id',
+                select: 'user_id room_id',
+                populate: [
+                    {
+                        path: 'user_id',
+                        select: 'name email'
+                    },
+                    {
+                        path: 'room_id',
+                        select: 'number'
+                    }
+                ]
+            })
+            .sort({ purchaseDate: -1 });
+        res.json(vouchers);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Verify and Use Voucher (Owner/Guard Action)
+exports.verifyVoucher = async (req, res) => {
+    try {
+        const { voucherCode } = req.body;
+        const pg_id = req.user.pg_id;
+
+        if (!voucherCode) {
+            return res.status(400).json({ message: 'Voucher code is required' });
+        }
+
+        const voucher = await MealVoucher.findOne({ voucherCode, pg_id, status: { $in: ['UNUSED', 'BILLED'] } })
+            .populate({
+                path: 'tenant_id',
+                select: 'user_id room_id',
+                populate: [
+                    {
+                        path: 'user_id',
+                        select: 'name'
+                    },
+                    {
+                        path: 'room_id',
+                        select: 'number'
+                    }
+                ]
+            });
+
+        if (!voucher) {
+            return res.status(404).json({ message: 'Invalid, already used, or expired meal voucher' });
+        }
+
+        voucher.status = 'USED';
+        voucher.useDate = Date.now();
+        await voucher.save();
+
+        res.json({
+            success: true,
+            message: 'Meal voucher verified and marked as USED successfully',
+            voucher
         });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });

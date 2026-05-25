@@ -37,7 +37,7 @@ const paymentSchema = new mongoose.Schema({
   // Purpose of the payment
   type: {
     type: String,
-    enum: ['RENT', 'SUBSCRIPTION', 'DEPOSIT', 'OTHER'],
+    enum: ['RENT', 'SUBSCRIPTION', 'DEPOSIT', 'OTHER', 'MESS'],
     required: true
   },
   // Method of payment

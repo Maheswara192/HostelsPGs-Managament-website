@@ -50,7 +50,13 @@ const OwnerTenants = () => {
             blood_group: '',
             moveInDate: new Date().toISOString().split('T')[0], // Default to today
             idProofFront: null, // Files cannot be persisted in localStorage easily
-            idProofBack: null
+            idProofBack: null,
+            // Preferences
+            sleepSchedule: 'FLEXIBLE',
+            diet: 'ANY',
+            profession: 'OTHER',
+            cleanliness: 3,
+            noiseTolerance: 'MEDIUM'
         };
     });
 
@@ -67,6 +73,38 @@ const OwnerTenants = () => {
     useEffect(() => {
         loadData();
     }, []);
+
+    const [compatibility, setCompatibility] = useState(null);
+    const [checkingCompat, setCheckingCompat] = useState(false);
+
+    useEffect(() => {
+        const checkRoomCompatibility = async () => {
+            if (!formData.room_id) {
+                setCompatibility(null);
+                return;
+            }
+            setCheckingCompat(true);
+            try {
+                const res = await ownerService.checkCompatibility(formData.room_id, {
+                    sleepSchedule: formData.sleepSchedule,
+                    diet: formData.diet,
+                    profession: formData.profession,
+                    cleanliness: formData.cleanliness,
+                    noiseTolerance: formData.noiseTolerance
+                });
+                if (res.success) {
+                    setCompatibility(res.data);
+                }
+            } catch (err) {
+                console.error("Failed to check roommate compatibility", err);
+            } finally {
+                setCheckingCompat(false);
+            }
+        };
+
+        const timer = setTimeout(checkRoomCompatibility, 500); // debounce 500ms
+        return () => clearTimeout(timer);
+    }, [formData.room_id, formData.sleepSchedule, formData.diet, formData.profession, formData.cleanliness, formData.noiseTolerance]);
 
     const loadData = async () => {
         try {
@@ -175,7 +213,13 @@ const OwnerTenants = () => {
             id_proof_type: tenant.id_proof_type || 'Aadhaar',
             id_proof_number: tenant.id_proof_number || '',
             blood_group: tenant.blood_group || '',
-            moveInDate: tenant.moveInDate ? tenant.moveInDate.split('T')[0] : new Date().toISOString().split('T')[0]
+            moveInDate: tenant.moveInDate ? tenant.moveInDate.split('T')[0] : new Date().toISOString().split('T')[0],
+            // Prefill Preferences
+            sleepSchedule: tenant.preferences?.sleepSchedule || 'FLEXIBLE',
+            diet: tenant.preferences?.diet || 'ANY',
+            profession: tenant.preferences?.profession || 'OTHER',
+            cleanliness: tenant.preferences?.cleanliness || 3,
+            noiseTolerance: tenant.preferences?.noiseTolerance || 'MEDIUM'
         });
         setEditingId(tenant._id);
         setShowForm(true);
@@ -223,6 +267,13 @@ const OwnerTenants = () => {
             data.append('rentAmount', formData.rentAmount);
             data.append('advanceAmount', formData.advanceAmount || 0);
 
+            // Append Preferences
+            data.append('sleepSchedule', formData.sleepSchedule || 'FLEXIBLE');
+            data.append('diet', formData.diet || 'ANY');
+            data.append('profession', formData.profession || 'OTHER');
+            data.append('cleanliness', formData.cleanliness || 3);
+            data.append('noiseTolerance', formData.noiseTolerance || 'MEDIUM');
+
             // Append Compliance Fields
             data.append('guardian_name', formData.guardian_name);
             data.append('guardian_phone', formData.guardian_phone);
@@ -260,7 +311,8 @@ const OwnerTenants = () => {
                 setFormData({
                     name: '', email: '', password: '', mobile: '', room_id: '', rentAmount: '', advanceAmount: '',
                     idProofFront: null, idProofBack: null, guardian_name: '', guardian_phone: '', permanent_address: '', id_proof_type: 'Aadhaar', id_proof_number: '', blood_group: '',
-                    moveInDate: new Date().toISOString().split('T')[0]
+                    moveInDate: new Date().toISOString().split('T')[0],
+                    sleepSchedule: 'FLEXIBLE', diet: 'ANY', profession: 'OTHER', cleanliness: 3, noiseTolerance: 'MEDIUM'
                 });
                 // Reset validation states
                 setValidationErrors({ mobile: '', guardian_phone: '', id_proof_number: '' });
@@ -527,15 +579,106 @@ const OwnerTenants = () => {
                                 )}
                             </button>
                         </div>
-
-                        <select name="room_id" value={formData.room_id} onChange={handleInputChange} required className="border p-2 rounded">
-                            <option value="">Select Room *</option>
-                            {rooms.map(r => (
-                                <option key={r._id} value={r._id}>Room {r.number} ({r.type} Bed)</option>
-                            ))}
-                        </select>
+                        <div className="flex flex-col gap-1.5">
+                            <select name="room_id" value={formData.room_id} onChange={handleInputChange} required className="border p-2 rounded w-full">
+                                <option value="">Select Room *</option>
+                                {rooms.map(r => (
+                                    <option key={r._id} value={r._id}>Room {r.number} ({r.type} Bed)</option>
+                                ))}
+                            </select>
+                            
+                            {/* Compatibility Badge */}
+                            {checkingCompat && (
+                                <span className="text-xs text-slate-400 italic ml-1">Evaluating compatibility...</span>
+                            )}
+                            {!checkingCompat && compatibility && (
+                                <div className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium flex flex-col gap-1 transition-all ${
+                                    compatibility.compatibilityScore >= 80 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
+                                    compatibility.compatibilityScore >= 50 ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                                    'bg-rose-50 text-rose-800 border-rose-200'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span>Compat Score: <strong className="text-sm">{compatibility.compatibilityScore}%</strong></span>
+                                        <span className="text-[10px] opacity-75">{compatibility.roommatesCount} roommate(s)</span>
+                                    </div>
+                                    {compatibility.matches.length > 0 && (
+                                        <div className="text-[10px] text-slate-600 border-t border-slate-200/50 pt-1 mt-0.5">
+                                            ✅ {compatibility.matches[0]}
+                                        </div>
+                                    )}
+                                    {compatibility.clashes.length > 0 && (
+                                        <div className="text-[10px] text-rose-600 border-t border-rose-200/50 pt-1 mt-0.5">
+                                            ⚠️ {compatibility.clashes[0]}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         <input type="number" name="rentAmount" placeholder="Rent Amount *" value={formData.rentAmount} onChange={handleInputChange} required className="border p-2 rounded" />
                         <input type="number" name="advanceAmount" placeholder="Advance/Deposit (Optional)" value={formData.advanceAmount} onChange={handleInputChange} className="border p-2 rounded" />
+ 
+                        {/* Roommate Lifestyle Preferences Section */}
+                        <div className="md:col-span-3 border-t border-slate-100 mt-4 pt-4">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Roommate Compatibility Profiling</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-semibold text-slate-500 ml-1">Sleep Schedule</label>
+                                    <select name="sleepSchedule" value={formData.sleepSchedule} onChange={handleInputChange} className="border p-2 rounded text-sm bg-white">
+                                        <option value="FLEXIBLE">Flexible / Any</option>
+                                        <option value="EARLY_BIRD">Early Bird (Morning)</option>
+                                        <option value="NIGHT_OWL">Night Owl (Late Night)</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-semibold text-slate-500 ml-1">Diet Preference</label>
+                                    <select name="diet" value={formData.diet} onChange={handleInputChange} className="border p-2 rounded text-sm bg-white">
+                                        <option value="ANY">No Preference / Any</option>
+                                        <option value="VEG">Strict Vegetarian</option>
+                                        <option value="NON_VEG">Non-Vegetarian</option>
+                                        <option value="EGGITARIAN">Eggitarian</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-semibold text-slate-500 ml-1">Profession</label>
+                                    <select name="profession" value={formData.profession} onChange={handleInputChange} className="border p-2 rounded text-sm bg-white">
+                                        <option value="OTHER">Other / General</option>
+                                        <option value="STUDENT">Student</option>
+                                        <option value="PROFESSIONAL">Working Professional</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-semibold text-slate-500 ml-1">Noise Tolerance</label>
+                                    <select name="noiseTolerance" value={formData.noiseTolerance} onChange={handleInputChange} className="border p-2 rounded text-sm bg-white">
+                                        <option value="MEDIUM">Medium / Normal</option>
+                                        <option value="LOW">Low (Requires Quiet Room)</option>
+                                        <option value="HIGH">High (Comfortable with Noise)</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-1 md:col-span-2">
+                                    <label className="text-xs font-semibold text-slate-500 ml-1 flex justify-between">
+                                        <span>Cleanliness & Tidiness index</span>
+                                        <span className="font-bold text-indigo-600">{formData.cleanliness} / 5</span>
+                                    </label>
+                                    <div className="flex items-center gap-3 mt-1.5">
+                                        <span className="text-[10px] text-slate-400">Casual</span>
+                                        <input
+                                            type="range"
+                                            name="cleanliness"
+                                            min="1"
+                                            max="5"
+                                            value={formData.cleanliness}
+                                            onChange={handleInputChange}
+                                            className="flex-1 accent-indigo-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
+                                        />
+                                        <span className="text-[10px] text-slate-400">Immaculate</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Compliance Section */}
                         <div className="md:col-span-3 border-t border-slate-100 mt-4 pt-4">

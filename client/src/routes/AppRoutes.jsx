@@ -41,6 +41,7 @@ import TenantDashboard from '../pages/tenant/Dashboard';
 import TenantPayments from '../pages/tenant/Payments';
 import TenantComplaints from '../pages/tenant/Complaints';
 import TenantFood from '../pages/tenant/Food';
+import TenantVisitors from '../pages/tenant/Visitors';
 
 import SocketTest from '../components/common/SocketTest';
 
@@ -91,6 +92,7 @@ const AppRoutes = () => {
                         <Route path="/tenant/payments" element={<ProtectedRoute allowedRoles={['tenant']}><TenantPayments /></ProtectedRoute>} />
                         <Route path="/tenant/complaints" element={<ProtectedRoute allowedRoles={['tenant']}><TenantComplaints /></ProtectedRoute>} />
                         <Route path="/tenant/food" element={<ProtectedRoute allowedRoles={['tenant']}><TenantFood /></ProtectedRoute>} />
+                        <Route path="/tenant/visitors" element={<ProtectedRoute allowedRoles={['tenant']}><TenantVisitors /></ProtectedRoute>} />
 
                     </Route>
                 </Route>

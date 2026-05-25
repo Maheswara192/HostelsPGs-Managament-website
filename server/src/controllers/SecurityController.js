@@ -157,3 +157,110 @@ exports.getMyGuestRequests = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+const PreAuthVisitor = require('../models/PreAuthVisitor');
+
+// Get Pre-Authorized Visitors List (Owner/Security dashboard)
+exports.getPreAuthVisitorsList = async (req, res) => {
+    try {
+        const pg_id = req.user.pg_id;
+        const preAuths = await PreAuthVisitor.find({ pg_id })
+            .populate({
+                path: 'tenant_id',
+                select: 'user_id room_id',
+                populate: [
+                    {
+                        path: 'user_id',
+                        select: 'name email'
+                    },
+                    {
+                        path: 'room_id',
+                        select: 'number'
+                    }
+                ]
+            })
+            .sort({ createdAt: -1 });
+        res.json(preAuths);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Check-In Pre-Authorized Visitor (Owner/Security dashboard)
+exports.checkInPreAuthVisitor = async (req, res) => {
+    try {
+        const { qrCodeToken } = req.body;
+        const pg_id = req.user.pg_id;
+
+        if (!qrCodeToken) {
+            return res.status(400).json({ message: 'QR Code Token is required' });
+        }
+
+        // Find the pre-auth record
+        const preAuth = await PreAuthVisitor.findOne({ qrCodeToken, pg_id, status: 'PENDING' })
+            .populate({
+                path: 'tenant_id',
+                select: 'user_id room_id',
+                populate: [
+                    {
+                        path: 'user_id',
+                        select: 'name'
+                    },
+                    {
+                        path: 'room_id',
+                        select: 'number'
+                    }
+                ]
+            });
+
+        if (!preAuth) {
+            return res.status(404).json({ message: 'Invalid or already used Pre-Authorized pass' });
+        }
+
+        // Mark pre-auth as CHECKED_IN
+        preAuth.status = 'CHECKED_IN';
+        await preAuth.save();
+
+        // Create a new Visitor record
+        const tenantName = preAuth.tenant_id?.user_id?.name || 'Tenant';
+        const roomNo = preAuth.tenant_id?.room_id?.number || 'N/A';
+        const details = `Pre-Authorized by ${tenantName} (Room ${roomNo})`;
+
+        // Validate visitor purpose against enum: ['Delivery', 'Visit', 'Maintenance', 'Interview', 'Other']
+        let purpose = 'Other';
+        if (['Delivery', 'Visit', 'Maintenance', 'Interview', 'Other'].includes(preAuth.purpose)) {
+            purpose = preAuth.purpose;
+        }
+
+        const visitor = await Visitor.create({
+            pg_id,
+            name: preAuth.name,
+            phone: preAuth.phone,
+            purpose,
+            details,
+            status: 'INSIDE',
+            entryTime: Date.now()
+        });
+
+        // Notify via socket
+        try {
+            const { getIO } = require('../services/socket.service');
+            const io = getIO();
+            io.to(`pg_${pg_id}`).emit('visitor_activity', {
+                action: 'CHECKED_IN',
+                visitor
+            });
+        } catch (socketError) {
+            console.error('Socket Emission Error:', socketError.message);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Visitor checked in successfully',
+            visitor,
+            preAuth
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};

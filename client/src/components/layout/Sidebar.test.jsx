@@ -45,7 +45,7 @@ describe('Sidebar Component', () => {
         renderSidebar('admin');
         expect(screen.getByText('Overview')).toBeInTheDocument();
         expect(screen.getByText('All PGs')).toBeInTheDocument();
-        expect(screen.getByText('User Management')).toBeInTheDocument();
+        expect(screen.getByText('Audit Logs')).toBeInTheDocument();
         expect(screen.queryByText('My Room')).not.toBeInTheDocument();
     });
 

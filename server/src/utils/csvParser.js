@@ -9,8 +9,11 @@ const fs = require('fs');
 const parseCsv = (filePath) => {
     return new Promise((resolve, reject) => {
         const results = [];
-        fs.createReadStream(filePath)
-            .pipe(parse({
+        const stream = fs.createReadStream(filePath);
+        
+        stream.on('error', (error) => reject(error));
+
+        stream.pipe(parse({
                 columns: true,
                 trim: true,
                 skip_empty_lines: true
@@ -22,3 +25,4 @@ const parseCsv = (filePath) => {
 };
 
 module.exports = { parseCsv };
+

@@ -37,6 +37,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     { to: '/tenant/payments', icon: <FileText size={20} />, label: 'Payments' },
                     { to: '/tenant/complaints', icon: <Bell size={20} />, label: 'My Complaints' },
                     { to: '/tenant/food', icon: <Utensils size={20} />, label: 'Food & Menu' },
+                    { to: '/tenant/visitors', icon: <ShieldCheck size={20} />, label: 'Visitors (Pre-Auth)' },
                 ];
             default:
                 return [];

@@ -18,13 +18,15 @@ const withTransaction = async (operation) => {
             await session.abortTransaction();
         }
 
-        // Check for specific MongoDB Replica Set errors
+        // Check for specific MongoDB Replica Set or transient environment errors
         // Code 20 or specific message content
-        if (error.message && (
+        if ((error.message && (
             error.message.includes('Transaction numbers are only allowed') ||
-            error.message.includes('replica set')
-        )) {
-            console.warn("⚠️ MongoDB Transaction failed (likely standalone instance). Retrying operation without transaction...");
+            error.message.includes('replica set') ||
+            error.message.includes('catalog changes') ||
+            error.message.includes('WriteConflict')
+        )) || error.code === 112 || (error.errorLabels && error.errorLabels.includes('TransientTransactionError'))) {
+            console.warn("⚠️ MongoDB Transaction failed (likely standalone or transient catalog issue). Retrying operation without transaction...");
             // Retry the operation without a session (Direct execution)
             return await operation(undefined);
         }

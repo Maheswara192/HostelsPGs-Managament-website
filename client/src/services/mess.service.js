@@ -28,6 +28,24 @@ const messService = {
     markAttendance: async (date, meal_type, status) => {
         const response = await api.post('/mess/attendance', { date, meal_type, status });
         return response.data;
+    },
+
+    // Meal Vouchers
+    purchaseVoucher: async (voucherData) => {
+        const response = await api.post('/mess/vouchers', voucherData);
+        return response.data;
+    },
+    getMyVouchers: async () => {
+        const response = await api.get('/mess/vouchers/my');
+        return response.data;
+    },
+    getVouchersList: async () => {
+        const response = await api.get('/mess/vouchers');
+        return response.data;
+    },
+    verifyVoucher: async (voucherCode) => {
+        const response = await api.post('/mess/vouchers/verify', { voucherCode });
+        return response.data;
     }
 };
 

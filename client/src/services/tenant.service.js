@@ -39,6 +39,16 @@ const tenantService = {
     requestExit: async (data) => {
         const response = await api.post('/tenant/request-exit', data);
         return response.data;
+    },
+
+    getPreAuthVisitors: async () => {
+        const response = await api.get('/tenant/preauth-visitors');
+        return response.data;
+    },
+
+    createPreAuthVisitor: async (visitorData) => {
+        const response = await api.post('/tenant/preauth-visitors', visitorData);
+        return response.data;
     }
 
 };

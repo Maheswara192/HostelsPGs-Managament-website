@@ -228,7 +228,14 @@ exports.addTenant = async (req, res, next) => {
         idProofBackPath: (req.files && req.files['idProofBack']) ? req.files['idProofBack'][0].path : null,
         contact_number: mobile,
         moveInDate: req.body.moveInDate || Date.now(),
-        deposit
+        deposit,
+        preferences: {
+          sleepSchedule: req.body.sleepSchedule || 'FLEXIBLE',
+          diet: req.body.diet || 'ANY',
+          profession: req.body.profession || 'OTHER',
+          cleanliness: parseInt(req.body.cleanliness) || 3,
+          noiseTolerance: req.body.noiseTolerance || 'MEDIUM'
+        }
       }], { session });
       tenant = tenants[0];
 
@@ -323,15 +330,15 @@ exports.updateTenant = async (req, res) => {
     if (mobile) tenant.contact_number = mobile;
     if (req.body.moveInDate) tenant.moveInDate = req.body.moveInDate;
 
-    // Handle File Update
-    if (req.files) {
-      if (req.files['idProofFront']) {
-        tenant.idProofFrontPath = req.files['idProofFront'][0].path;
-      }
-      if (req.files['idProofBack']) {
-        tenant.idProofBackPath = req.files['idProofBack'][0].path;
-      }
+    // Update preferences if provided
+    if (!tenant.preferences) {
+      tenant.preferences = {};
     }
+    if (req.body.sleepSchedule) tenant.preferences.sleepSchedule = req.body.sleepSchedule;
+    if (req.body.diet) tenant.preferences.diet = req.body.diet;
+    if (req.body.profession) tenant.preferences.profession = req.body.profession;
+    if (req.body.cleanliness !== undefined && req.body.cleanliness !== null) tenant.preferences.cleanliness = parseInt(req.body.cleanliness);
+    if (req.body.noiseTolerance) tenant.preferences.noiseTolerance = req.body.noiseTolerance;
 
     await tenant.save();
 
@@ -1063,6 +1070,133 @@ exports.requestFinancialReportAsync = async (req, res) => {
   } catch (error) {
     console.error('❌ Async Report Request Error:', error);
     res.status(500).json({ success: false, message: 'Failed to request report', error: error.message });
+  }
+};
+
+// @desc    Evaluate Roommate Compatibility for Onboarding/Editing
+// @route   POST /api/owner/rooms/:id/compatibility
+// @access  Private (Owner)
+exports.checkRoommateCompatibility = async (req, res) => {
+  try {
+    const roomId = req.params.id;
+    const proposedPreferences = {
+      sleepSchedule: req.body.sleepSchedule || 'FLEXIBLE',
+      diet: req.body.diet || 'ANY',
+      profession: req.body.profession || 'OTHER',
+      cleanliness: parseInt(req.body.cleanliness) || 3,
+      noiseTolerance: req.body.noiseTolerance || 'MEDIUM'
+    };
+
+    // Find all active roommates currently in this room
+    const currentRoommates = await Tenant.find({
+      room_id: roomId,
+      status: 'active'
+    }).populate('user_id', 'name email');
+
+    // If no occupants are in this room yet, it's 100% compatible (First resident)
+    if (currentRoommates.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          compatibilityScore: 100,
+          clashes: [],
+          matches: ["First occupant: Room is completely vacant!"],
+          roommatesCount: 0
+        }
+      });
+    }
+
+    let totalScore = 0;
+    const clashes = [];
+    const matches = [];
+
+    // Compare proposed tenant against every existing roommate, then average the scores
+    currentRoommates.forEach(roommate => {
+      let score = 100;
+      const rPref = roommate.preferences || {
+        sleepSchedule: 'FLEXIBLE',
+        diet: 'ANY',
+        profession: 'OTHER',
+        cleanliness: 3,
+        noiseTolerance: 'MEDIUM'
+      };
+
+      const name = roommate.user_id?.name || 'Current Resident';
+
+      // 1. Sleep Schedule
+      if (proposedPreferences.sleepSchedule === rPref.sleepSchedule) {
+        matches.push(`Sleep schedule aligns with ${name} (${proposedPreferences.sleepSchedule.replace('_', ' ')})`);
+      } else if (
+        (proposedPreferences.sleepSchedule === 'EARLY_BIRD' && rPref.sleepSchedule === 'NIGHT_OWL') ||
+        (proposedPreferences.sleepSchedule === 'NIGHT_OWL' && rPref.sleepSchedule === 'EARLY_BIRD')
+      ) {
+        score -= 20; // severe clash
+        clashes.push(`Schedule conflict with ${name}: Early Bird vs. Night Owl`);
+      } else {
+        score -= 5;
+      }
+
+      // 2. Diet
+      if (proposedPreferences.diet === rPref.diet || proposedPreferences.diet === 'ANY' || rPref.diet === 'ANY') {
+        matches.push(`Dietary choices are compatible with ${name}`);
+      } else if (proposedPreferences.diet === 'VEG' && rPref.diet === 'NON_VEG') {
+        score -= 15;
+        clashes.push(`Dietary mismatch with ${name}: Strict Vegetarian vs. Non-Vegetarian`);
+      } else if (proposedPreferences.diet === 'NON_VEG' && rPref.diet === 'VEG') {
+        score -= 15;
+        clashes.push(`Dietary mismatch with ${name}: Non-Vegetarian vs. Strict Vegetarian`);
+      }
+
+      // 3. Cleanliness
+      const diffClean = Math.abs(proposedPreferences.cleanliness - rPref.cleanliness);
+      if (diffClean === 0) {
+        matches.push(`Cleanliness habits align with ${name}`);
+      } else if (diffClean >= 3) {
+        score -= 20;
+        clashes.push(`Cleanliness conflict with ${name}: Extremely neat vs. relaxed habits`);
+      } else {
+        score -= diffClean * 5;
+      }
+
+      // 4. Noise Tolerance
+      if (proposedPreferences.noiseTolerance === rPref.noiseTolerance) {
+        matches.push(`Noise tolerance levels match with ${name}`);
+      } else if (
+        (proposedPreferences.noiseTolerance === 'LOW' && rPref.noiseTolerance === 'HIGH') ||
+        (proposedPreferences.noiseTolerance === 'HIGH' && rPref.noiseTolerance === 'LOW')
+      ) {
+        score -= 20;
+        clashes.push(`Noise preference clash with ${name}: High sensitivity vs. quiet requirement`);
+      } else {
+        score -= 8;
+      }
+
+      // 5. Profession
+      if (proposedPreferences.profession === rPref.profession && proposedPreferences.profession !== 'OTHER') {
+        matches.push(`Both are ${proposedPreferences.profession.toLowerCase()}s`);
+      } else if (proposedPreferences.profession !== rPref.profession) {
+        score -= 5;
+      }
+
+      totalScore += score;
+    });
+
+    const avgScore = Math.max(0, Math.min(100, Math.round(totalScore / currentRoommates.length)));
+    const uniqueMatches = [...new Set(matches)];
+    const uniqueClashes = [...new Set(clashes)];
+
+    res.status(200).json({
+      success: true,
+      data: {
+        compatibilityScore: avgScore,
+        clashes: uniqueClashes,
+        matches: uniqueMatches,
+        roommatesCount: currentRoommates.length
+      }
+    });
+  } catch (error) {
+    console.error("Roommate Compatibility Evaluation Error:", error);
+    res.status(500).json({ success: false, message: 'Compatibility evaluation failed' });
   }
 };
 

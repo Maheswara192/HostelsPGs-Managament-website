@@ -34,6 +34,9 @@ router.route('/rooms/:id')
     .put(checkSubscription, validate(roomSchema), updateRoom)
     .delete(checkSubscription, deleteRoom);
 
+router.route('/rooms/:id/compatibility')
+    .post(checkSubscription, require('../controllers/owner.controller').checkRoommateCompatibility);
+
 const upload = require('../middlewares/upload.middleware');
 
 const tenantUpload = upload.fields([

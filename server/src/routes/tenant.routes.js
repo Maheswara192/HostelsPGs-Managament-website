@@ -9,8 +9,9 @@ const {
     raiseComplaint,
     getComplaints,
     getNotices,
-    requestExit
-
+    requestExit,
+    getPreAuthVisitors,
+    createPreAuthVisitor
 } = require('../controllers/tenant.controller');
 
 
@@ -36,5 +37,8 @@ router.post('/complaints', raiseComplaint);
 router.get('/notices', getNotices);
 router.post('/request-exit', requestExit);
 
+// Pre-Authorized Visitors
+router.get('/preauth-visitors', getPreAuthVisitors);
+router.post('/preauth-visitors', createPreAuthVisitor);
 
 module.exports = router;

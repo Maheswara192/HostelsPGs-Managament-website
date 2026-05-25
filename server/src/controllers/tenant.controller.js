@@ -69,22 +69,32 @@ exports.initiateRentPayment = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Tenant record not found' });
         }
 
-        const amount = tenant.rentAmount;
+        // Sum all active (unbilled) meal vouchers
+        const MealVoucher = require('../models/MealVoucher');
+        const activeVouchers = await MealVoucher.find({ tenant_id: tenant._id, status: { $ne: 'BILLED' } });
+        const messDues = activeVouchers.reduce((sum, v) => sum + v.price, 0);
+        const totalAmount = tenant.rentAmount + messDues;
+
         // Create Mock Receipt
         const receiptId = `receipt_rent_${tenant._id}_${Date.now()}`;
 
         // Use Service
-        const order = await paymentService.createOrder(amount * 100, 'INR', receiptId);
+        const order = await paymentService.createOrder(totalAmount * 100, 'INR', receiptId);
 
         // Create local payment record
         await Payment.create({
             pg_id: tenant.pg_id,
             user_id: req.user._id,
             tenant_id: tenant._id,
-            amount: amount,
+            amount: totalAmount,
             type: 'RENT',
             status: 'CREATED',
-            gateway_order_id: order.id
+            gateway_order_id: order.id,
+            metadata: {
+                rentAmount: tenant.rentAmount,
+                messDues: messDues,
+                voucherIds: activeVouchers.map(v => v._id.toString())
+            }
         });
 
         res.json({
@@ -128,6 +138,15 @@ exports.verifyPayment = async (req, res) => {
             payment.transaction_date = Date.now();
             await payment.save();
 
+            // Mark vouchers as BILLED upon payment success
+            if (payment.metadata && payment.metadata.voucherIds && payment.metadata.voucherIds.length > 0) {
+                const MealVoucher = require('../models/MealVoucher');
+                await MealVoucher.updateMany(
+                    { _id: { $in: payment.metadata.voucherIds } },
+                    { $set: { status: 'BILLED' } }
+                );
+            }
+
             res.json({ success: true, message: 'Payment verified successfully' });
         } else {
             payment.status = 'FAILED';
@@ -151,10 +170,17 @@ exports.getPayments = async (req, res) => {
 
         const payments = await Payment.find({ tenant_id: tenant._id }).sort({ transaction_date: -1 });
 
+        // Sum unpaid meal vouchers
+        const MealVoucher = require('../models/MealVoucher');
+        const activeVouchers = await MealVoucher.find({ tenant_id: tenant._id, status: { $ne: 'BILLED' } });
+        const messDues = activeVouchers.reduce((sum, v) => sum + v.price, 0);
+
         res.json({
             success: true,
             data: {
                 rentAmount: tenant.rentAmount,
+                messDues,
+                activeVouchersCount: activeVouchers.length,
                 payments
             }
         });
@@ -251,6 +277,53 @@ exports.requestExit = async (req, res) => {
         await tenant.save();
 
         res.json({ success: true, message: 'Exit request submitted successfully', data: tenant });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+const PreAuthVisitor = require('../models/PreAuthVisitor');
+
+// @desc    Get Tenant Pre-Authorized Visitors List
+// @route   GET /api/tenant/preauth-visitors
+// @access  Private (Tenant)
+exports.getPreAuthVisitors = async (req, res) => {
+    try {
+        const tenant = await Tenant.findOne({ user_id: req.user._id });
+        if (!tenant) return res.status(404).json({ success: false, message: 'Tenant record not found' });
+
+        const visitors = await PreAuthVisitor.find({ tenant_id: tenant._id }).sort({ createdAt: -1 });
+        res.json({ success: true, data: visitors });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Create Tenant Pre-Authorized Visitor Pass
+// @route   POST /api/tenant/preauth-visitors
+// @access  Private (Tenant)
+exports.createPreAuthVisitor = async (req, res) => {
+    try {
+        const { name, phone, purpose, visitDate } = req.body;
+        const tenant = await Tenant.findOne({ user_id: req.user._id });
+        if (!tenant) return res.status(404).json({ success: false, message: 'Tenant record not found' });
+
+        // Generate unique token
+        const qrCodeToken = 'pass_' + crypto.randomBytes(8).toString('hex');
+
+        const newPass = await PreAuthVisitor.create({
+            pg_id: tenant.pg_id,
+            tenant_id: tenant._id,
+            name,
+            phone,
+            purpose: purpose || 'Visit',
+            visitDate: visitDate || Date.now(),
+            qrCodeToken
+        });
+
+        res.status(201).json({ success: true, data: newPass });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Server Error' });

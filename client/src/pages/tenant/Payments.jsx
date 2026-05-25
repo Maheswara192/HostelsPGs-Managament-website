@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import tenantService from '../../services/tenant.service';
+import { generateRentReceipt } from '../../utils/pdfGenerator';
 
 // Load Razorpay Script dynamically if not present in index.html, 
 // usually it's better to have it in index.html <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -7,15 +8,26 @@ import tenantService from '../../services/tenant.service';
 
 const Payments = () => {
     const [rentAmount, setRentAmount] = useState(0);
+    const [messDues, setMessDues] = useState(0);
+    const [activeVouchersCount, setActiveVouchersCount] = useState(0);
     const [payments, setPayments] = useState([]);
+    const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const fetchPayments = async () => {
         try {
-            const res = await tenantService.getPayments();
-            if (res.success) {
-                setRentAmount(res.data.rentAmount);
-                setPayments(res.data.payments);
+            const [paymentsRes, dashboardRes] = await Promise.all([
+                tenantService.getPayments(),
+                tenantService.getDashboard()
+            ]);
+            if (paymentsRes.success) {
+                setRentAmount(paymentsRes.data.rentAmount);
+                setMessDues(paymentsRes.data.messDues || 0);
+                setActiveVouchersCount(paymentsRes.data.activeVouchersCount || 0);
+                setPayments(paymentsRes.data.payments);
+            }
+            if (dashboardRes.success) {
+                setProfile(dashboardRes.data);
             }
         } catch (error) {
             console.error('Error fetching payments:', error);
@@ -130,20 +142,38 @@ const Payments = () => {
             </div>
 
             {/* Pay Rent Section */}
-            <div className="bg-white p-6 rounded-lg shadow-md border border-slate-200 mb-8 flex justify-between items-center transition-all hover:shadow-lg">
-                <div>
-                    <p className="text-slate-600 mb-1">Current Monthly Rent</p>
-                    <h2 className="text-3xl font-bold text-slate-900">₹{rentAmount}</h2>
+            <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 transition-all hover:shadow-lg">
+                <div className="space-y-2">
+                    <h2 className="text-xl font-bold text-slate-800">Dynamic Payment Invoice</h2>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-sm text-slate-500 border-b border-dashed border-slate-100 pb-2">
+                        <span>Base Rent:</span>
+                        <span className="font-bold text-slate-800">₹{rentAmount}</span>
+                        {messDues > 0 && (
+                            <>
+                                <span className="flex items-center gap-1">
+                                    Mess Add-On Dues: 
+                                    <span className="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 rounded font-black border uppercase">
+                                        {activeVouchersCount} Vouchers
+                                    </span>
+                                </span>
+                                <span className="font-bold text-slate-800">₹{messDues}</span>
+                            </>
+                        )}
+                    </div>
+                    <div className="pt-1 flex items-center gap-4">
+                        <span className="text-slate-600 font-semibold">Total Invoice Due:</span>
+                        <span className="text-3xl font-black text-slate-900">₹{rentAmount + messDues}</span>
+                    </div>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 w-full md:w-auto">
                     <button
                         onClick={handlePayRent}
-                        disabled={loading || rentAmount <= 0}
-                        className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={loading || (rentAmount + messDues) <= 0}
+                        className="bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-extrabold hover:bg-emerald-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition"
                     >
-                        <span>💳</span> {loading ? 'Processing...' : 'Pay Rent Now'}
+                        <span>💳</span> {loading ? 'Processing...' : 'Pay Invoice Now'}
                     </button>
-                    {rentAmount > 0 && <span className="text-xs text-slate-500 text-center">Secured by Razorpay</span>}
+                    {(rentAmount + messDues) > 0 && <span className="text-xs text-slate-500 text-center">Secured by Razorpay</span>}
                 </div>
             </div>
 
@@ -162,12 +192,13 @@ const Payments = () => {
                                 <th className="p-3 text-slate-600 font-medium">Type</th>
                                 <th className="p-3 text-slate-600 font-medium">Status</th>
                                 <th className="p-3 text-slate-600 font-medium">Reference ID</th>
+                                <th className="p-3 text-slate-600 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {payments.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="p-8 text-center text-slate-500 italic">No payment history available.</td>
+                                    <td colSpan="6" className="p-8 text-center text-slate-500 italic">No payment history available.</td>
                                 </tr>
                             ) : (
                                 payments.map((pay) => (
@@ -184,6 +215,17 @@ const Payments = () => {
                                             </span>
                                         </td>
                                         <td className="p-3 text-xs text-slate-400 font-mono tracking-wide">{pay.gateway_order_id}</td>
+                                        <td className="p-3 text-right">
+                                            {pay.status === 'SUCCESS' && (
+                                                <button
+                                                    onClick={() => generateRentReceipt(pay, profile)}
+                                                    className="text-indigo-600 hover:text-indigo-900 text-xs font-semibold flex items-center gap-1 ml-auto"
+                                                    title="Download PDF Receipt"
+                                                >
+                                                    📥 Receipt
+                                                </button>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))
                             )}

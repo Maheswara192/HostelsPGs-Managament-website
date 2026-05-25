@@ -5,7 +5,7 @@ const { JWT_SECRET } = require('../../src/config/env');
 describe('Unit: generateToken Utility', () => {
     it('should generate a valid JWT token', () => {
         const userId = '1234567890abcdef';
-        const token = generateToken(userId);
+        const token = generateToken({ id: userId });
 
         expect(token).toBeDefined();
 
@@ -16,7 +16,7 @@ describe('Unit: generateToken Utility', () => {
 
     it('should set expiration to 24 hours', () => {
         const userId = 'user123';
-        const token = generateToken(userId);
+        const token = generateToken({ id: userId });
         const decoded = jwt.decode(token);
 
         // Check exp claim exists

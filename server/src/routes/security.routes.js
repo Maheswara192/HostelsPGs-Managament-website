@@ -19,4 +19,8 @@ router.get('/guests/my', protect, authorize('tenant'), SecurityController.getMyG
 router.get('/guests/pending', protect, authorize('owner'), SecurityController.getPendingGuestRequests);
 router.put('/guests/:id/status', protect, authorize('owner'), SecurityController.updateGuestRequestStatus);
 
+// Pre-Authorized Visitors (Owner/Admin)
+router.get('/preauth-visitors', protect, authorize('owner', 'admin'), SecurityController.getPreAuthVisitorsList);
+router.post('/preauth-visitors/check-in', protect, authorize('owner', 'admin'), SecurityController.checkInPreAuthVisitor);
+
 module.exports = router;

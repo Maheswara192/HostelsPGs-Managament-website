@@ -47,7 +47,7 @@ describe('Tenant Payments Component', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByRole('heading', { name: '₹5000' })).toBeInTheDocument();
+            expect(screen.getAllByText('₹5000').length).toBeGreaterThan(0);
             expect(screen.getByText('order_123')).toBeInTheDocument();
             expect(screen.getByText('SUCCESS')).toBeInTheDocument();
         });
@@ -68,9 +68,9 @@ describe('Tenant Payments Component', () => {
             </BrowserRouter>
         );
 
-        await waitFor(() => screen.getByRole('heading', { name: '₹5000' }));
+        await waitFor(() => expect(screen.getAllByText('₹5000').length).toBeGreaterThan(0));
 
-        const payButton = screen.getByText('Pay Rent Now');
+        const payButton = screen.getByText('Pay Invoice Now');
         fireEvent.click(payButton);
 
         await waitFor(() => {
@@ -93,8 +93,8 @@ describe('Tenant Payments Component', () => {
             </BrowserRouter>
         );
 
-        await waitFor(() => screen.getByRole('heading', { name: '₹5000' }));
-        fireEvent.click(screen.getByText('Pay Rent Now'));
+        await waitFor(() => expect(screen.getAllByText('₹5000').length).toBeGreaterThan(0));
+        fireEvent.click(screen.getByText('Pay Invoice Now'));
 
         await waitFor(() => {
             expect(alertMock).toHaveBeenCalledWith('Failed to initiate payment');

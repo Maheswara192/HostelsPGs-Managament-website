@@ -47,6 +47,34 @@ const tenantSchema = new mongoose.Schema({
     id_proof_number: String,
     blood_group: String,
     // End Compliance Fields
+    preferences: {
+        sleepSchedule: {
+            type: String,
+            enum: ['EARLY_BIRD', 'NIGHT_OWL', 'FLEXIBLE'],
+            default: 'FLEXIBLE'
+        },
+        diet: {
+            type: String,
+            enum: ['VEG', 'NON_VEG', 'EGGITARIAN', 'ANY'],
+            default: 'ANY'
+        },
+        profession: {
+            type: String,
+            enum: ['STUDENT', 'PROFESSIONAL', 'OTHER'],
+            default: 'OTHER'
+        },
+        cleanliness: {
+            type: Number,
+            default: 3,
+            min: 1,
+            max: 5
+        },
+        noiseTolerance: {
+            type: String,
+            enum: ['LOW', 'MEDIUM', 'HIGH'],
+            default: 'MEDIUM'
+        }
+    },
     moveInDate: {
         type: Date,
         default: Date.now

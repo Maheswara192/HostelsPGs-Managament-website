@@ -129,6 +129,11 @@ const ownerService = {
         return response.data;
     },
 
+    checkCompatibility: async (roomId, preferences) => {
+        const response = await api.post(`/owner/rooms/${roomId}/compatibility`, preferences);
+        return response.data;
+    },
+
     manageExitRequest: async (data) => {
         const response = await api.post('/owner/tenants/exit-request', data);
         return response.data;

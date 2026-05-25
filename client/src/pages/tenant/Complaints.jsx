@@ -62,8 +62,9 @@ const Complaints = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-slate-700 mb-1">Title / Subject</label>
+                            <label htmlFor="title" className="block text-slate-700 mb-1">Title / Subject</label>
                             <input
+                                id="title"
                                 type="text"
                                 className="w-full border p-2 rounded"
                                 value={title}
@@ -72,8 +73,9 @@ const Complaints = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-slate-700 mb-1">Category</label>
+                            <label htmlFor="category" className="block text-slate-700 mb-1">Category</label>
                             <select
+                                id="category"
                                 className="w-full border p-2 rounded"
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
@@ -90,8 +92,9 @@ const Complaints = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-slate-700 mb-1">Priority</label>
+                            <label htmlFor="priority" className="block text-slate-700 mb-1">Priority</label>
                             <select
+                                id="priority"
                                 className="w-full border p-2 rounded"
                                 value={priority}
                                 onChange={(e) => setPriority(e.target.value)}
@@ -105,8 +108,9 @@ const Complaints = () => {
 
 
                     <div>
-                        <label className="block text-slate-700 mb-1">Description</label>
+                        <label htmlFor="description" className="block text-slate-700 mb-1">Description</label>
                         <textarea
+                            id="description"
                             className="w-full border p-2 rounded h-24"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}

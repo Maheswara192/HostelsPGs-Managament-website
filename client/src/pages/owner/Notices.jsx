@@ -79,8 +79,9 @@ const OwnerNotices = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+                        <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Title</label>
                         <input
+                            id="title"
                             type="text"
                             required
                             className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none"
@@ -91,8 +92,9 @@ const OwnerNotices = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                        <label htmlFor="type" className="block text-sm font-medium text-slate-700 mb-1">Type</label>
                         <select
+                            id="type"
                             className="w-full border p-2 rounded-lg outline-none"
                             value={type}
                             onChange={(e) => setType(e.target.value)}
@@ -105,8 +107,9 @@ const OwnerNotices = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
+                        <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">Message</label>
                         <textarea
+                            id="message"
                             required
                             className="w-full border p-2 rounded-lg h-32 resize-none focus:ring-2 focus:ring-primary/20 outline-none"
                             placeholder="Details about the announcement..."
