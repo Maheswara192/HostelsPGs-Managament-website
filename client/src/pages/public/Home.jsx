@@ -4,6 +4,9 @@ import { Users, CreditCard, Shield, Zap, TrendingUp, Smartphone, Building2, Layo
 import Button from '../../components/common/Button';
 import { motion } from 'framer-motion';
 
+import logo from '../../assets/stayease_logo.png';
+import heroBg from '../../assets/stayease_hero_bg.png';
+
 const Home = () => {
     const navigate = useNavigate();
 
@@ -20,7 +23,10 @@ const Home = () => {
     return (
         <div className="overflow-hidden font-sans bg-surface">
             {/* Hero Section */}
-            <section className="bg-[#0b0c10] text-white min-h-[95vh] flex flex-col justify-center relative overflow-hidden">
+            <section 
+                className="bg-[#0b0c10] text-white min-h-[95vh] flex flex-col justify-center relative overflow-hidden bg-cover bg-center"
+                style={{ backgroundImage: `url(${heroBg})` }}
+            >
                 {/* Animated Background Blobs */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute top-[-15%] right-[-5%] w-[600px] h-[600px] bg-primary-600/30 rounded-full blur-[140px] mix-blend-screen animate-float" />
@@ -45,24 +51,24 @@ const Home = () => {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
                                 </span>
-                                HostelsPGs Manager v2.0
+                                StayEase SaaS Platform
                             </div>
 
                             <h1 className="text-5xl lg:text-7xl font-extrabold mb-6 leading-[1.1] tracking-tight drop-shadow-2xl font-heading">
                                 <span className="text-white">Manage Properties</span> <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 via-fuchsia-400 to-primary-300 animate-gradient-x brightness-125">
-                                    Like a Pro.
+                                    With StayEase.
                                 </span>
                             </h1>
 
                             <p className="text-lg text-slate-300 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
-                                The ultimate operating system for PG owners. Automate rent collections, handle complaints dynamically, and scale your property portfolio with ease.
+                                The ultimate operating system for PG and hostel owners. Segregate your properties, automate rent collections dynamically, and scale your accommodation portfolio with absolute security.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                                 <Button
                                     size="lg"
-                                    className="px-8 py-4 text-lg"
+                                    className="px-8 py-4 text-lg animate-pulse-slow"
                                     onClick={() => navigate('/register')}
                                 >
                                     Start Free Trial
@@ -107,7 +113,7 @@ const Home = () => {
                                         <div className="w-3 h-3 rounded-full bg-emerald-400/80 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
                                     </div>
                                     <div className="ml-6 px-4 py-1 bg-black/40 rounded-md text-[11px] text-slate-400 font-mono w-64 text-center border border-white/5 mx-auto">
-                                        app.staymanager.com/overview
+                                        app.stayease.com/overview
                                     </div>
                                 </div>
 
@@ -115,7 +121,7 @@ const Home = () => {
                                 <div className="flex h-full">
                                     {/* Sidebar */}
                                     <div className="w-20 bg-[#161925] border-r border-white/5 flex flex-col items-center py-6 gap-6 relative">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent rounded-xl shadow-lg flex items-center justify-center text-white font-bold">SM</div>
+                                        <img src={logo} alt="StayEase" className="w-10 h-10 object-contain rounded-xl" />
                                         <div className="w-8 h-8 rounded-lg bg-primary-500/20 border border-primary-500/50 shadow-glow" />
                                         <div className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 transition-colors" />
                                         <div className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 transition-colors" />

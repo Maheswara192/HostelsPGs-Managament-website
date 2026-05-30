@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from '../common/Button';
 
-import logo from '../../assets/logo.svg';
+import logo from '../../assets/stayease_logo.png';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -17,7 +17,7 @@ const Navbar = () => {
                     <Link to="/" className="flex items-center space-x-2 group">
                         <div className="relative">
                             <div className="absolute inset-0 bg-primary-500/20 blur-lg rounded-full group-hover:bg-primary-500/40 transition-colors"></div>
-                            <img src={logo} alt="StayManager" className="h-10 relative z-10" />
+                            <img src={logo} alt="StayEase" className="h-10 relative z-10" />
                         </div>
                     </Link>
 

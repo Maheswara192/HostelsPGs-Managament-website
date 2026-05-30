@@ -16,9 +16,10 @@ const Pricing = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                     <PricingCard
                         title="Starter"
-                        price="₹499"
+                        price="₹2,499"
                         features={[
-                            'Up to 20 Tenants',
+                            'Up to 50 Beds Capacity',
+                            'Logical Tenancy Isolation',
                             'Rent Tracking & Reminders',
                             'Complaint Management',
                             'Notice Board',
@@ -27,10 +28,11 @@ const Pricing = () => {
                     />
                     <PricingCard
                         title="Pro"
-                        price="₹1,499"
+                        price="₹5,999"
                         popular
                         features={[
-                            'Up to 100 Tenants',
+                            'Up to 250 Beds Capacity',
+                            'Up to 5 Property Branches',
                             'Automated WhatsApp Reminders',
                             'Expense Management',
                             'Financial Reports (CSV)',
@@ -39,13 +41,13 @@ const Pricing = () => {
                     />
                     <PricingCard
                         title="Enterprise"
-                        price="₹4,999"
+                        price="₹12,999"
                         features={[
-                            'Unlimited Tenants',
-                            'Multi-Branch Management',
-                            'Custom Branding',
+                            'Unlimited Beds & Properties',
+                            'Multi-Branch Custom Routing',
+                            'Custom Branding & Domains',
                             'Dedicated Account Manager',
-                            'API Access'
+                            'API Access & Webhooks'
                         ]}
                     />
                 </div>
