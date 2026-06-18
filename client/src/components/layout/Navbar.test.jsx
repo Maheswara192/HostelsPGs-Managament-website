@@ -26,7 +26,7 @@ describe('Navbar Component', () => {
 
     it('renders logo and desktop links', () => {
         renderNavbar();
-        expect(screen.getByAltText('StayManager')).toBeInTheDocument();
+        expect(screen.getByAltText('StayEase')).toBeInTheDocument();
         expect(screen.getByText('Home')).toBeInTheDocument();
         expect(screen.getByText('Features')).toBeInTheDocument();
         expect(screen.getByText('Pricing')).toBeInTheDocument();

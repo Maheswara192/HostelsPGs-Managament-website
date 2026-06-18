@@ -28,6 +28,8 @@ const OwnerTenants = () => {
         return localStorage.getItem('showTenantForm') === 'true';
     });
 
+    const [searchTerm, setSearchTerm] = useState('');
+
     const [formData, setFormData] = useState(() => {
         const saved = localStorage.getItem('tenantFormData');
         if (saved) {
@@ -424,7 +426,6 @@ const OwnerTenants = () => {
 
 
     // --- Search Filtering Logic ---
-    const [searchTerm, setSearchTerm] = useState('');
 
     // Import SearchInput at top: import SearchInput from '../../components/common/SearchInput';
     // This is a dynamic update, so I need to update the entire filtered map or just inject the logic here.
@@ -839,7 +840,7 @@ const OwnerTenants = () => {
                                     <div className="mt-2 bg-yellow-50 border border-yellow-200 p-2 rounded text-xs">
                                         <p className="font-bold text-yellow-800">⚠️ Exit Requested</p>
                                         <p className="text-yellow-700">Date: {new Date(tenant.exit_request.requested_date).toLocaleDateString()}</p>
-                                        <p className="text-yellow-700 italic">"{tenant.exit_request.reason}"</p>
+                                        <p className="text-yellow-700 italic">&quot;{tenant.exit_request.reason}&quot;</p>
                                         <div className="flex gap-2 mt-2">
                                             <button
                                                 onClick={() => handleExitAction(tenant._id, 'APPROVED', tenant.exit_request.requested_date)}

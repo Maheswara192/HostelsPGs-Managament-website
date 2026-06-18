@@ -19,7 +19,7 @@ const Features = () => {
                 <div className="text-center mb-16">
                     <h1 className="text-4xl font-bold text-slate-900 mb-4">Powerful Features</h1>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Designed to solve the real problems of PG owners. From admission to exit, we've got you covered.
+                        Designed to solve the real problems of PG owners. From admission to exit, we&apos;ve got you covered.
                     </p>
                 </div>
 

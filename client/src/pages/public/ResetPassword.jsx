@@ -89,7 +89,7 @@ const ResetPassword = () => {
 
                     {!initialEmail && (
                         <div className="mb-4 text-xs text-orange-600 bg-orange-50 p-2 rounded">
-                            Notice: We couldn't auto-detect your email. Please enter it manually.
+                            Notice: We couldn&apos;t auto-detect your email. Please enter it manually.
                         </div>
                     )}
 

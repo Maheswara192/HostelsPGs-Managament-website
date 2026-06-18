@@ -8,11 +8,14 @@ const SocketTest = () => {
         const socket = getSocket();
 
         if (!socket) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setStatus('Not Initialized (Login Required)');
             return;
         }
 
-        if (socket.connected) setStatus('Connected 🟢');
+        if (socket.connected) {
+            setStatus('Connected 🟢');
+        }
 
         socket.on('connect', () => setStatus('Connected 🟢'));
         socket.on('disconnect', () => setStatus('Disconnected 🔴'));

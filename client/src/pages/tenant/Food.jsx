@@ -187,7 +187,7 @@ const Food = () => {
                                             className="flex-1 py-2.5 px-4 rounded-xl bg-green-50 text-green-700 hover:bg-green-100 font-bold flex items-center justify-center gap-1.5 transition text-xs uppercase tracking-wider border border-green-150"
                                         >
                                             <CheckCircle size={14} />
-                                            I'm Eating
+                                            I&apos;m Eating
                                         </button>
                                         <button
                                             onClick={() => handleSkip(meal)}

@@ -35,6 +35,7 @@ const Payments = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchPayments();
     }, []);
 
@@ -137,7 +138,7 @@ const Payments = () => {
                 <p className="text-blue-700 font-medium">Payment Information</p>
                 <p className="text-sm text-blue-600 mt-1">
                     If using <strong>Test Mode</strong> cards/UPI, real scanning (GPay/PhonePe) will <span className="underline decoration-wavy">not work</span>.
-                    Please use the "Test UPI" option or simulate success if available.
+                    Please use the &quot;Test UPI&quot; option or simulate success if available.
                 </p>
             </div>
 

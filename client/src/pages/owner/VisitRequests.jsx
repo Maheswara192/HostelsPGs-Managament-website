@@ -113,7 +113,7 @@ const VisitRequests = () => {
                                     </div>
                                     {req.notes && (
                                         <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 italic">
-                                            "{req.notes}"
+                                            &quot;{req.notes}&quot;
                                         </div>
                                     )}
                                 </div>

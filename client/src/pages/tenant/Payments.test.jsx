@@ -21,6 +21,7 @@ describe('Tenant Payments Component', () => {
         vi.clearAllMocks();
         window.alert.mockClear();
         window.confirm.mockReturnValue(true);
+        tenantService.getDashboard.mockResolvedValue({ success: true, data: {} });
     });
 
     const mockPaymentsDetails = {

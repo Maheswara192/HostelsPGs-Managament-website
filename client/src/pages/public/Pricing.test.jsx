@@ -32,7 +32,7 @@ describe('Pricing Page', () => {
         expect(screen.getByText('Starter')).toBeInTheDocument();
         expect(screen.getByText('Pro')).toBeInTheDocument();
         expect(screen.getByText('Enterprise')).toBeInTheDocument();
-        expect(screen.getByText('₹499')).toBeInTheDocument();
+        expect(screen.getByText('₹2,499')).toBeInTheDocument();
     });
 
     it('buttons are clickable', () => {
