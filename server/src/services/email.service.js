@@ -175,4 +175,69 @@ const sendAccountSetupEmail = async (email, name, token, pgName, lang = 'en') =>
     });
 };
 
-module.exports = { sendOTP, sendWelcomeEmail, sendAccountSetupEmail };
+/**
+ * Send Payment Confirmation Email
+ * @param {string} to - Recipient email
+ * @param {object} paymentDetails - Amount, id, date, type, pgName, tenantName
+ * @param {string} recipientRole - 'tenant' | 'owner'
+ */
+const sendPaymentSuccessEmail = async (to, paymentDetails, recipientRole) => {
+    return retryOperation(async () => {
+        try {
+            if (!process.env.SMTP_EMAIL || process.env.SMTP_EMAIL === 'test@example.com' || process.env.SMTP_EMAIL === 'mock_admin@hostel.com') {
+                console.log('==================================================');
+                console.log(`[DEV MODE] Sending PAYMENT SUCCESS EMAIL to ${to} (${recipientRole})`);
+                console.log(`[DETAILS] Amount: ₹${paymentDetails.amount} | ID: ${paymentDetails.id} | Type: ${paymentDetails.type}`);
+                console.log('==================================================');
+                return true;
+            }
+
+            const subject = recipientRole === 'owner' 
+                ? `[StayManager] Payment Received - ₹${paymentDetails.amount}` 
+                : `[StayManager] Payment Successful Confirmation - ₹${paymentDetails.amount}`;
+
+            const html = recipientRole === 'owner' ? `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+                    <h2 style="color: #10B981; text-align: center;">Payment Received! 🎉</h2>
+                    <p>Hello,</p>
+                    <p>A payment of <strong>₹${paymentDetails.amount}</strong> was successfully received from tenant <strong>${paymentDetails.tenantName}</strong> for PG <strong>${paymentDetails.pgName}</strong>.</p>
+                    <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>💰 Amount:</strong> ₹${paymentDetails.amount}</p>
+                        <p style="margin: 5px 0;"><strong>🔍 Transaction ID:</strong> ${paymentDetails.id}</p>
+                        <p style="margin: 5px 0;"><strong>📅 Date:</strong> ${new Date(paymentDetails.date).toLocaleString()}</p>
+                        <p style="margin: 5px 0;"><strong>📝 Type:</strong> ${paymentDetails.type}</p>
+                    </div>
+                </div>
+            ` : `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+                    <h2 style="color: #4F46E5; text-align: center;">Payment Successful! 💳</h2>
+                    <p>Hello <strong>${paymentDetails.tenantName}</strong>,</p>
+                    <p>Your payment of <strong>₹${paymentDetails.amount}</strong> to PG <strong>${paymentDetails.pgName}</strong> has been processed successfully.</p>
+                    <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>💰 Amount Paid:</strong> ₹${paymentDetails.amount}</p>
+                        <p style="margin: 5px 0;"><strong>🔍 Transaction ID:</strong> ${paymentDetails.id}</p>
+                        <p style="margin: 5px 0;"><strong>📅 Date:</strong> ${new Date(paymentDetails.date).toLocaleString()}</p>
+                        <p style="margin: 5px 0;"><strong>📝 Type:</strong> ${paymentDetails.type}</p>
+                    </div>
+                    <p>Thank you for choosing StayManager!</p>
+                </div>
+            `;
+
+            const mailOptions = {
+                from: process.env.SMTP_EMAIL,
+                to: to,
+                subject: subject,
+                html: html
+            };
+
+            const info = await transporter.sendMail(mailOptions);
+            console.log('Payment success email sent: %s', info.messageId);
+            return true;
+        } catch (error) {
+            console.error('Error sending payment success email:', error);
+            throw error; // Trigger Retry
+        }
+    });
+};
+
+module.exports = { sendOTP, sendWelcomeEmail, sendAccountSetupEmail, sendPaymentSuccessEmail };

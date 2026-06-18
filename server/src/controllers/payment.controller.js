@@ -211,6 +211,14 @@ exports.verifyPayment = async (req, res) => {
 
             await payment.save({ session });
             await session.commitTransaction();
+
+            // Trigger Real-Time & Email Notifications
+            try {
+                const { sendPaymentNotifications } = require('../services/notification.service');
+                sendPaymentNotifications(payment._id).catch(err => console.error('Notification Error:', err));
+            } catch (err) {
+                console.error('Failed to trigger notifications:', err);
+            }
             
             res.status(200).json({ success: true, message: 'Payment Verified' });
         } catch (txnError) {
@@ -311,6 +319,14 @@ exports.recordManualPayment = async (req, res) => {
             transaction_date: date || Date.now(),
             metadata: { remarks, source: 'manual_entry' }
         });
+
+        // Trigger Real-Time & Email Notifications
+        try {
+            const { sendPaymentNotifications } = require('../services/notification.service');
+            sendPaymentNotifications(payment._id).catch(err => console.error('Notification Error:', err));
+        } catch (err) {
+            console.error('Failed to trigger notifications:', err);
+        }
 
         console.info(`[AUDIT] MANUAL PAYMENT: ₹${amount} (${mode}) for Tenant ${tenantId} by ${req.user.name}`);
 

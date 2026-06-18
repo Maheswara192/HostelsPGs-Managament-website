@@ -147,6 +147,14 @@ exports.verifyPayment = async (req, res) => {
                 );
             }
 
+            // Trigger Real-Time & Email Notifications
+            try {
+                const { sendPaymentNotifications } = require('../services/notification.service');
+                sendPaymentNotifications(payment._id).catch(err => console.error('Notification Error:', err));
+            } catch (err) {
+                console.error('Failed to trigger notifications:', err);
+            }
+
             res.json({ success: true, message: 'Payment verified successfully' });
         } else {
             payment.status = 'FAILED';
