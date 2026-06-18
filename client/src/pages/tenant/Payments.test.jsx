@@ -19,7 +19,9 @@ window.Razorpay = vi.fn(function MockRazorpay() {
 describe('Tenant Payments Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        window.alert.mockClear();
+        // window.alert and window.confirm are vi.fn() set in setup.js's beforeAll.
+        // vi.clearAllMocks() already resets them; this is a safe explicit reset.
+        if (typeof window.alert?.mockClear === 'function') window.alert.mockClear();
         window.confirm.mockReturnValue(true);
         tenantService.getDashboard.mockResolvedValue({ success: true, data: {} });
     });
@@ -85,8 +87,8 @@ describe('Tenant Payments Component', () => {
         tenantService.getPayments.mockResolvedValue({ success: true, data: mockPaymentsDetails });
         tenantService.initiateRentPayment.mockResolvedValue({ success: false });
 
-        // Mock alert
-        const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
+        // window.alert is already mocked as vi.fn() via setup.js — no need for spyOn.
+        const alertMock = vi.mocked(window.alert);
 
         render(
             <BrowserRouter>
